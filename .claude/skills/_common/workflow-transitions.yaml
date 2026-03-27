@@ -1,0 +1,38 @@
+# Jira workflow transition mappings for CI skills.
+# Script: zone_prepare_story.py transition-jira --skill <skill> --outcome <outcome>
+
+transitions:
+  zone-prepare-story:
+    success: "Test Automation (ATDD)"
+    blocked: "Blocked"
+
+  zone-dev:
+    success: "Test Automation in progress"
+    blocked: "Blocked"
+
+  zone-qa-atdd:
+    success: "In Progress"
+    blocked: "Blocked"
+
+  zone-qa-automation:
+    success: "Code review in progress"
+    blocked: "Blocked"
+
+  zone-code-review:
+    pass: "Test Review in progress"
+    fail: "In Progress"
+    blocked: "Blocked"
+
+  zone-test-review:
+    pass: "In Review"
+    fail: "Test automation in progress"
+    blocked: "Blocked"
+
+  zone-human-review:
+    pass: "Done"
+    fail: "In Progress"
+    blocked: "Blocked"
+
+  zone-retrospective:
+    success: "In Review"
+    blocked: "Blocked"

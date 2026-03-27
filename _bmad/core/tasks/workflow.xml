@@ -58,7 +58,7 @@
         <action>Replace {{variables}} with values (ask user if unknown)</action>
         <execute-tags>
           <tag>action xml tag → Perform the action</tag>
-          <tag>check if="condition" xml tag → Conditional block wrapping actions (requires closing check tag)</tag>
+          <tag>check if="condition" xml tag → Conditional block wrapping actions (requires closing &lt;/check&gt;)</tag>
           <tag>ask xml tag → Prompt user and WAIT for response</tag>
           <tag>invoke-workflow xml tag → Execute another workflow with given inputs and the workflow.xml runner</tag>
           <tag>invoke-task xml tag → Execute specified task</tag>
@@ -120,12 +120,12 @@
     <execution>
       <tag>action - Required action to perform</tag>
       <tag>action if="condition" - Single conditional action (inline, no closing tag needed)</tag>
-      <tag>check if="condition"...check - Conditional block wrapping multiple items (closing tag required)</tag>
+      <tag>check if="condition"&gt;...&lt;/check&gt; - Conditional block wrapping multiple items (closing tag required)</tag>
       <tag>ask - Get user input (ALWAYS wait for response before continuing)</tag>
       <tag>goto - Jump to another step</tag>
       <tag>invoke-workflow - Call another workflow</tag>
       <tag>invoke-task - Call a task</tag>
-      <tag>invoke-protocol - Execute a reusable protocol</tag>
+      <tag>invoke-protocol - Execute a reusable protocol (e.g., discover_inputs)</tag>
     </execution>
     <output>
       <tag>template-output - Save content checkpoint</tag>
@@ -154,16 +154,16 @@
               <action>Determine load_strategy from pattern config (defaults to FULL_LOAD if not specified)</action>
 
               <strategy name="FULL_LOAD">
-                <desc>Load ALL files in sharded directory</desc>
-                <action>Use glob pattern to find ALL .md files</action>
+                <desc>Load ALL files in sharded directory - used for PRD, Architecture, UX, brownfield docs</desc>
+                <action>Use glob pattern to find ALL .md files (e.g., "{output_folder}/*architecture*/*.md")</action>
                 <action>Load EVERY matching file completely</action>
                 <action>Concatenate content in logical order (index.md first if exists, then alphabetical)</action>
                 <action>Store in variable: {pattern_name_content}</action>
               </strategy>
 
               <strategy name="SELECTIVE_LOAD">
-                <desc>Load specific shard using template variable</desc>
-                <action>Check for template variables in sharded_single pattern</action>
+                <desc>Load specific shard using template variable - example: used for epics with {{epic_num}}</desc>
+                <action>Check for template variables in sharded_single pattern (e.g., {{epic_num}})</action>
                 <action>If variable undefined, ask user for value OR infer from context</action>
                 <action>Resolve template to specific file path</action>
                 <action>Load that specific file</action>
@@ -171,15 +171,17 @@
               </strategy>
 
               <strategy name="INDEX_GUIDED">
-                <desc>Load index.md, analyze structure, then intelligently load relevant docs</desc>
-                <mandate>DO NOT BE LAZY - use best judgment to load documents that might have relevant information</mandate>
+                <desc>Load index.md, analyze structure and description of each doc in the index, then intelligently load relevant docs</desc>
+                <mandate>DO NOT BE LAZY - use best judgment to load documents that might have relevant information, even if only a 5% chance</mandate>
                 <action>Load index.md from sharded directory</action>
                 <action>Parse table of contents, links, section headers</action>
                 <action>Analyze workflow's purpose and objective</action>
                 <action>Identify which linked/referenced documents are likely relevant</action>
+                <example>If workflow is about authentication and index shows "Auth Overview", "Payment Setup", "Deployment" → Load auth
+                  docs, consider deployment docs, skip payment</example>
                 <action>Load all identified relevant documents</action>
                 <action>Store combined content in variable: {pattern_name_content}</action>
-                <note>When in doubt, LOAD IT - context is valuable</note>
+                <note>When in doubt, LOAD IT - context is valuable, being thorough is better than missing critical info</note>
               </strategy>
               <action>Mark pattern as RESOLVED, skip to next pattern</action>
             </check>
@@ -187,11 +189,11 @@
 
           <substep n="2b" title="Try Whole Document if No Sharded Found">
             <check if="no sharded matches found OR no sharded pattern exists">
-              <action>Attempt glob match on 'whole' pattern</action>
+              <action>Attempt glob match on 'whole' pattern (e.g., "{output_folder}/*prd*.md")</action>
               <check if="matches found">
                 <action>Load ALL matching files completely (no offset/limit)</action>
-                <action>Store content in variable: {pattern_name_content}</action>
-                <action>Mark pattern as RESOLVED</action>
+                <action>Store content in variable: {pattern_name_content} (e.g., {prd_content})</action>
+                <action>Mark pattern as RESOLVED, skip to next pattern</action>
               </check>
             </check>
           </substep>
@@ -199,15 +201,23 @@
           <substep n="2c" title="Handle Not Found">
             <check if="no matches for sharded OR whole">
               <action>Set {pattern_name_content} to empty string</action>
-              <action>Note in session: "No {pattern_name} files found"</action>
+              <action>Note in session: "No {pattern_name} files found" (not an error, just unavailable, offer use change to provide)</action>
             </check>
           </substep>
         </step>
 
         <step n="3" title="Report Discovery Results">
           <action>List all loaded content variables with file counts</action>
+          <example>
+            ✓ Loaded {prd_content} from 5 sharded files: prd/index.md, prd/requirements.md, ...
+            ✓ Loaded {architecture_content} from 1 file: Architecture.md
+            ✓ Loaded {epics_content} from selective load: epics/epic-3.md
+            ○ No ux_design files found
+          </example>
+          <note>This gives workflow transparency into what context is available</note>
         </step>
       </flow>
+
     </protocol>
   </protocols>
 
@@ -222,4 +232,4 @@
       collaborative helping the user flesh out their ideas. Do not rush or optimize and skip any section.
     </critical-rules>
   </llm>
-</task>
+</task> 

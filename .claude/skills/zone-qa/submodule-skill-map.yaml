@@ -1,0 +1,43 @@
+# Maps submodule names to test-relevant domain skill(s) that should be loaded
+# when a story references that submodule for test generation.
+# Used by zone_qa.py resolve_domain_skills() in Phase 2.
+# Updated: 2026-03-07 — added 6 missing modules (Round 1 repo-review)
+# Updated: 2026-03-26 — removed deprecated zone.clientdashboard-automation;
+#   zoneqa_automation is now the single canonical Playwright E2E/API repo.
+#   zone_qa.py auto-includes zoneqa_automation (see E2E_TRIGGER_MODULES constant)
+#   whenever a story touches any testable source module — story authors never need
+#   to reference it explicitly.
+
+mappings:
+  # Playwright E2E/API — single canonical repo (auto-included by zone_qa.py)
+  zoneqa_automation: [zone-qa-automation]
+  # .NET xUnit
+  zone.pggateway: [zone-dotnet, zone-compliance]
+  zone.zonepay: [zone-dotnet, zone-compliance]
+  zone.framework: [zone-dotnet]
+  zone.framework.v3: [zone-dotnet]
+  zonepay.settlement: [zone-dotnet, zone-compliance]
+  zone.cardlesstransactionprocessing: [zone-dotnet, zone-compliance]
+  zone.zonepay.notifications: [zone-dotnet]
+  zone.orchestrator: []
+  zone.admin.api: [zone-dotnet, zone-sui]
+  # Blockchain Hardhat/Sui
+  zonedc.settlement: [zone-besu, zone-compliance]
+  zone.smartcontracts.sui: [zone-sui]
+  zone.sui.sdk: [zone-dotnet, zone-sui]
+  zone.sui.indexer: [zone-dotnet, zone-sui]
+  zone.settlement.sui: [zone-dotnet, zone-sui, zone-compliance]
+  # Frontend (component tests)
+  zone.clientdashboard: [zone-frontend]
+  zone.zonepaypwa: [zone-frontend]
+  zone.zonepay.qrrouter: [zone-frontend]
+  zone.zonepaydeeplink: []
+  # Helm/K8s
+  zone.helm: [zone-helm]
+  zonepay.helmtemplate: [zone-helm]
+  zonepay.helmvalues: [zone-helm]
+  # Database migrations
+  zone.liquibase: [zone-liquibase]
+  zonepay.version2sqlscripts: [zone-liquibase]
+  # CI/CD
+  zone.ci: []

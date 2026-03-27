@@ -1,0 +1,40 @@
+# Maps submodule names to domain skill(s) that should be loaded
+# when a story references that submodule.
+# Used by zone_dev.py resolve_domain_skills() in Phase 2.
+# Updated: 2026-03-07 — added 6 missing modules (Round 1 repo-review)
+
+mappings:
+  # .NET backend services
+  zone.zonepay: [zone-dotnet, zone-compliance]
+  zone.pggateway: [zone-dotnet, zone-compliance]
+  zone.framework: [zone-dotnet]
+  zone.framework.v3: [zone-dotnet]
+  zonepay.settlement: [zone-dotnet, zone-compliance]
+  zone.cardlesstransactionprocessing: [zone-dotnet, zone-compliance]
+  zone.zonepay.notifications: [zone-dotnet]
+  zone.orchestrator: []
+  zone.admin.api: [zone-dotnet, zone-sui]
+  # Frontend
+  zone.clientdashboard: [zone-frontend]
+  zone.zonepaypwa: [zone-frontend]
+  zone.zonepay.qrrouter: [zone-frontend]
+  zone.zonepaydeeplink: []
+  # Blockchain (Besu / Solidity)
+  zonedc.settlement: [zone-besu, zone-compliance]
+  # Blockchain (Sui / Move)
+  zone.smartcontracts.sui: [zone-sui]
+  zone.sui.sdk: [zone-dotnet, zone-sui]
+  zone.sui.indexer: [zone-dotnet, zone-sui]
+  zone.settlement.sui: [zone-dotnet, zone-sui, zone-compliance]
+  # Helm/K8s
+  zone.helm: [zone-helm]
+  zonepay.helmtemplate: [zone-helm]
+  zonepay.helmvalues: [zone-helm]
+  # Database migrations
+  zone.liquibase: [zone-liquibase]
+  zonepay.version2sqlscripts: [zone-liquibase]
+  # CI/CD
+  zone.ci: []
+  # QA automation — single canonical Playwright repo (auto-included by zone_review.py)
+  # zone.clientdashboard-automation is DEPRECATED; harmonized into zoneqa_automation
+  zoneqa_automation: [zone-qa-automation]

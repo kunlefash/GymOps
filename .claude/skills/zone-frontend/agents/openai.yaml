@@ -1,0 +1,3 @@
+display_name: Zone Frontend
+short_description: React and Next.js implementation standards across Zone frontend modules.
+default_prompt: Apply zone-frontend standards for app structure, component patterns, state management, and frontend testing.

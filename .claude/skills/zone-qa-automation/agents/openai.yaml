@@ -1,0 +1,3 @@
+display_name: Zone QA Automation
+short_description: Playwright E2E testing standards for cardless and dashboard automation modules.
+default_prompt: Apply zone-qa-automation standards for page object patterns, fixtures, reporting, CI stability, and cross-tenant test coverage.

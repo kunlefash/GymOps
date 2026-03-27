@@ -1,0 +1,29 @@
+sprint:
+  # If omitted or null, zone-sprint asks at runtime.
+  target_story_points: null
+  duration_days: 14
+  # Jira sprint name must be <=30 chars
+  name_template: "Sprint {index} {start_date}"
+  goal_template: null
+
+planning:
+  min_point_per_story: 1
+  max_point_per_story: 13
+  allow_overflow: false
+  # Path to precomputed estimates from zone-estimator subagent (Phase 1a).
+  # When set, planner uses these instead of keyword heuristic. Override with --estimates-file.
+  estimates_file: "{project-root}/_bmad-output/implementation-artifacts/story-estimates.yaml"
+
+jira:
+  project_key: "CLSDLC"
+  board_id: 463
+  auto_discover_board: false
+  mapping_file: "{project-root}/_bmad-output/implementation-artifacts/jira-key-map.yaml"
+  require_tools: true
+
+execution:
+  # Phase 4 is a hybrid workflow executed from:
+  # .claude/skills/zone-sprint/references/story-creator.md
+  phase4_mode: "hybrid-workflow"
+  story_creator_workflow: "{project-root}/.claude/skills/zone-sprint/references/story-creator.md"
+  story_template: "{project-root}/_bmad/bmm/workflows/4-implementation/create-story/template.md"

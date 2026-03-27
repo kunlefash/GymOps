@@ -1,0 +1,5 @@
+# Confluence publish settings for the zone-test-design skill
+confluence:
+  space_key: "PMT"
+  parent_page_id: "395313155"   # optional -- leave empty for top-level page
+  title_prefix: "{project_name} - Test Design"

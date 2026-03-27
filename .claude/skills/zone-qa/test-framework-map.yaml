@@ -1,0 +1,47 @@
+# Maps submodule name patterns to test frameworks, versions, and test conventions.
+# Used by zone-qa Phase 3 to auto-detect the correct test tooling per submodule.
+# The domain skill (from submodule-skill-map.yaml) provides coding standards;
+# this file provides test runner specifics.
+#
+# NOTE: zone.clientdashboard-automation is DEPRECATED. All E2E and API tests
+# are harmonized into zoneqa_automation. Do not add new entries for the dashboard
+# automation module.
+
+# ---------------------------------------------------------------------------
+# Canonical E2E/API test repository
+# ---------------------------------------------------------------------------
+# zoneqa_automation is auto-included by zone_qa.py whenever a story touches any
+# source module listed in E2E_TRIGGER_MODULES. It is NEVER added by story authors.
+e2e_test_repo: zoneqa_automation
+e2e_conventions:
+  pom_pattern: "BasePage inheritance (pageObjectClass/basePage.js)"
+  test_dir_e2e: "tests/cardless/pwa/"
+  test_dir_api: "tests/cardless/api/"
+  file_naming: "camelCase.spec.js"
+  api_auth: "getHeadersForBank(request, institution) from apiManager/apiBase.js"
+  data_driven: "Multi-institution loops (['BANKA', 'BANKB', 'OFI'])"
+  logging: "Emoji markers: checkmark=success, cross=failure, warning=warning, blue=info/step"
+  annotations: "test.info().annotations.push({ type: '<testiny_id>', description: '...' })"
+  locators: "Use .first() on ambiguous locators; use waitAndClick()/waitAndFill() not bare .click()"
+
+frameworks:
+  - pattern: "zoneqa_automation"
+    framework: "playwright"
+    version: "1.49.1"
+    domain_skill: "zone-qa-automation"
+    conventions: "BasePage POM, multi-institution loops (BANKA/BANKB/OFI), camelCase.spec.js"
+
+  - pattern: "zone.pggateway|zone.framework|zone.zonepay|zonepay.settlement|zone.cardlesstransactionprocessing|zone.zonepay.notifications|zone.framework.v3"
+    framework: "xunit"
+    domain_skill: "zone-dotnet"
+    conventions: "Clean Architecture test project conventions"
+
+  - pattern: "zonedc.settlement"
+    framework: "hardhat"
+    domain_skill: "zone-besu"
+    conventions: "Solidity test patterns, gas optimization checks"
+
+  - pattern: "zone.clientdashboard|zone.zonepaypwa|zone.zonepay.qrrouter"
+    framework: "vitest"
+    domain_skill: "zone-frontend"
+    conventions: "React component test patterns (unit/component only — E2E/API go to zoneqa_automation)"

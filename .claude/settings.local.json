@@ -22,7 +22,13 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(find /Users/mac/Agentic_SDLC/zonepay.superrepo/.claude -type f -name *.md)"
+      "Bash(find /Users/mac/Agentic_SDLC/zonepay.superrepo/.claude -type f -name *.md)",
+      "Bash(git reset:*)",
+      "Bash(ls -1 /Users/mac/Agentic_SDLC/zonepay.superrepo/.claude/skills/*/SKILL.md)",
+      "Bash(head -10 /Users/mac/Agentic_SDLC/zonepay.superrepo/_bmad/tea/agents/*.md)",
+      "Bash(cat:*)",
+      "Bash(__NEW_LINE_63dad3c52ac3763b__ echo:*)",
+      "Bash(cd /Users/mac/Documents/GymOps echo \"=== TOTAL FILES ===\" find _bmad .claude -type f)"
     ]
   }
 }

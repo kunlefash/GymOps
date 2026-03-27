@@ -1,0 +1,19 @@
+# Jira publish defaults for zone-epics skill
+jira:
+  atlassian_server: "Atlassian"
+  project_key: "CLSDLC"
+  project_key_derivation: false
+
+  epic_issue_type: "Epic"
+  story_issue_type: "Story"
+  upsert_strategy: "title-match"
+
+  include_readiness_context: true
+  include_sprint_context: true
+  require_acceptance_criteria: true
+  embed_references_inline: true
+  auto_repair_after_sync: true
+
+  mapping_strategy: "separate-sidecar"
+  mapping_file: "{implementation_artifacts}/jira-key-map.yaml"
+  persist_urls: true

@@ -1,0 +1,17 @@
+# Confluence + Jira publish defaults for zone-bug-fix skill
+confluence:
+  space_key: "PMT"
+  parent_page_id: "395313155"
+  title_template: "{project_name} - Bug Fix"
+
+jira:
+  atlassian_server: "Atlassian"
+  project_key: "CLSDLC"
+  project_key_derivation: false
+  bug_issue_type: "Bug"
+  upsert_strategy: "title-match"
+  require_acceptance_criteria: true
+  embed_references_inline: true
+  mapping_strategy: "separate-sidecar"
+  mapping_file: "{implementation_artifacts}/jira-key-map.yaml"
+  persist_urls: true

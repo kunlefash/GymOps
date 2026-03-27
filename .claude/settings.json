@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \":*)",
+      "Bash(ls -la /Users/mac/Agentic_SDLC/zonepay.superrepo/_bmad-output/implementation-artifacts/stories/17-1-*.md /Users/mac/Agentic_SDLC/zonepay.superrepo/_bmad-output/implementation-artifacts/stories/18-1-*.md /Users/mac/Agentic_SDLC/zonepay.superrepo/_bmad-output/implementation-artifacts/stories/19-1-*.md /Users/mac/Agentic_SDLC/zonepay.superrepo/_bmad-output/implementation-artifacts/stories/20-1-*.md)",
+      "Bash(python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning --message \"chore\\(bmad\\): persist sprint stories and status before Jira updates — Virtual Account Display\" --repo-root .)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git rebase:*)",
+      "Bash(git log:*)",
+      "Bash(ls -la _bmad-output/implementation-artifacts/stories/18-1-*.md _bmad-output/implementation-artifacts/stories/19-1-*.md _bmad-output/implementation-artifacts/stories/20-1-*.md)",
+      "mcp__plugin_atlassian_atlassian__editJiraIssue",
+      "Bash(python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning --message \"chore\\(bmad\\): persist Jira sprint metadata [sprint-3] — Virtual Account Display\" --repo-root .)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "find . -name '*.sh' -not -path './node_modules/*' -exec chmod +x {} +"
+          }
+        ]
+      }
+    ]
+  }
+}
