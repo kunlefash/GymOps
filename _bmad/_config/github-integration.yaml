@@ -1,0 +1,36 @@
+github:
+  owner: kunlefash
+  repo: GymOps
+  default_branch: main
+
+  branch_strategy:
+    feature: "feat/{story-key}"
+    bugfix: "fix/{story-key}"
+    hotfix: "hotfix/{description}"
+    release: "release/{version}"
+
+  pr_settings:
+    auto_review: true
+    require_approval: true
+    reviewers: ["kunlefash"]
+    labels:
+      ai_generated: "🤖 ai-generated"
+      needs_review: "👀 needs-review"
+      approved: "✅ approved"
+
+  automation:
+    on_story_complete:
+      - create_feature_branch
+      - push_code
+      - open_pr
+      - trigger_code_review
+      - notify_owner
+
+    on_review_complete:
+      - add_review_comments_to_pr
+      - update_story_status
+      - label_pr
+
+    on_pr_merged:
+      - update_story_to_done
+      - update_sprint_status

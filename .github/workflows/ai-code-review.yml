@@ -1,0 +1,65 @@
+name: AI Code Review
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+
+jobs:
+  review:
+    if: contains(github.event.pull_request.labels.*.name, 'ai-generated') || contains(github.event.pull_request.labels.*.name, 'needs-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+      - name: Get Changed Files
+        id: changed
+        run: |
+          FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | head -50)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Run Code Review Agent
+        id: review
+        run: |
+          REVIEW=$(claude -p "You are the BMAD Code Review Agent. Execute the code review workflow from _bmad/bmm/workflows/4-implementation/code-review/steps/. Review these changed files: ${{ steps.changed.outputs.files }}. PR #${{ github.event.pull_request.number }}. Check architecture alignment, code quality, test coverage, and edge cases. Output a structured review report." --allowedTools "Read,Glob,Grep,Bash")
+          
+          echo "review<<EOF" >> $GITHUB_OUTPUT
+          echo "$REVIEW" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+      - name: Post Review to PR
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "$(cat <<EOF
+          ## AI Code Review
+
+          ${{ steps.review.outputs.review }}
+          
+          ---
+          Reviewed by BMAD Code Review Agent
+          EOF
+          )"
+          
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --add-label "reviewed"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,28 @@
+sprint:
+  name: "Sprint {NUMBER}"
+  start_date: "{START_DATE}"
+  end_date: "{END_DATE}"
+  goal: "{SPRINT_GOAL}"
+  status: "active"
+
+stories:
+  - key: "{STORY_KEY}"
+    title: "{TITLE}"
+    status: "ready-for-dev"  # ready-for-dev | in-progress | in-review | done | blocked
+    assignee: "ai-dev-agent"
+    branch: "feat/{STORY_KEY}"
+    pr_number: null
+    blockers: []
+    notes: ""
+
+metrics:
+  total_points: 0
+  completed_points: 0
+  velocity: null
+
+daily_log:
+  - date: "{DATE}"
+    completed: []
+    in_progress: []
+    blocked: []
+    notes: ""

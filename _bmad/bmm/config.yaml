@@ -1,0 +1,31 @@
+user:
+  name: Adekunle
+  handle: kunlefash
+  language: en
+
+project:
+  name: GymOps
+  description: "Gym operations management platform"
+  repo: "kunlefash/GymOps"
+
+tech_stack:
+  frontend: "Next.js 15, TypeScript strict, Tailwind CSS"
+  backend: "Node.js, Express/Fastify, TypeScript"
+  database: "PostgreSQL with Prisma ORM"
+  deployment: "Vercel (frontend), Vercel Serverless Functions (API)"
+  testing: "Jest, Playwright (E2E), React Testing Library"
+
+paths:
+  output: "_bmad-output"
+  planning: "_bmad-output/planning-artifacts"
+  implementation: "_bmad-output/implementation-artifacts"
+  stories: "_bmad-output/implementation-artifacts/stories"
+  sprints: "_bmad-output/implementation-artifacts/sprints"
+
+conventions:
+  branch_prefix: "feat/"
+  story_branch: "story/{story_key}"
+  pr_template: true
+  tdd_required: true
+  min_test_coverage: 80
+  commit_style: "conventional"

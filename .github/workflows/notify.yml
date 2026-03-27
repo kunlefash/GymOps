@@ -1,0 +1,23 @@
+name: Notify on AI Activity
+on:
+  pull_request:
+    types: [opened, labeled]
+
+jobs:
+  notify:
+    if: contains(github.event.pull_request.labels.*.name, 'ai-generated')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Notify Owner
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "@kunlefash AI agent has completed work on this PR. Please review when ready.
+            
+          **Quick Actions:**
+          - Review the changes in the Files tab
+          - Check the story file for dev agent notes
+          - Approve and merge if satisfied"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

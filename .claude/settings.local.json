@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python3 \"/Users/mac/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/326e62dc-4dd7-42a7-955e-72ddb3a0bc3f/b12dee8a-ae51-4917-a8cf-5e0561f4853b/skills/docx/scripts/office/unpack.py\" \"/Users/mac/Downloads/career-playbook-v2.docx\" /tmp/career-playbook-unpacked/)",
+      "Bash(pip3 install:*)",
+      "Read(//private/tmp/**)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(node create-plan.js)",
+      "Bash(python3 \"/Users/mac/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/326e62dc-4dd7-42a7-955e-72ddb3a0bc3f/b12dee8a-ae51-4917-a8cf-5e0561f4853b/skills/docx/scripts/office/validate.py\" \"/Users/mac/Downloads/2-Month-Career-Plan.docx\")",
+      "Bash(python3 \"/Users/mac/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/326e62dc-4dd7-42a7-955e-72ddb3a0bc3f/b12dee8a-ae51-4917-a8cf-5e0561f4853b/skills/docx/scripts/office/soffice.py\" --headless --convert-to pdf \"/Users/mac/Downloads/2-Month-Career-Plan.docx\" --outdir /tmp)",
+      "Bash(python3 create-tracker.py)",
+      "Bash(python3 \"/Users/mac/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/326e62dc-4dd7-42a7-955e-72ddb3a0bc3f/b12dee8a-ae51-4917-a8cf-5e0561f4853b/skills/xlsx/scripts/recalc.py\" \"/Users/mac/Downloads/2-Month-Progress-Tracker.xlsx\" 30)",
+      "Bash(python3 -c \":*)",
+      "Bash(find /Users/mac/Agentic_SDLC/zonepay.superrepo/.github -type f -name *.yml -o -name *.yaml)",
+      "Bash(git init:*)",
+      "Bash(gh auth:*)",
+      "Bash(brew install:*)",
+      "Bash(git branch:*)",
+      "Bash(gh repo:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
