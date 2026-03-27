@@ -14,3 +14,19 @@ user_name: Adekunle
 communication_language: English
 document_output_language: English
 output_folder: "{project-root}/_bmad-output"
+
+# GitHub Repositories
+github_owner: kunlefash
+github_repos:
+  orchestration: GymOps
+  frontend: gymops-frontend
+  backend: gymops-backend
+github_integration: "{project-root}/_bmad/_config/github-integration.yaml"
+
+# Tech Stack
+tech_stack:
+  frontend: "Next.js 15, TypeScript strict, Tailwind CSS, React"
+  backend: "Node.js, Express, TypeScript, Prisma ORM"
+  database: "PostgreSQL"
+  deployment: "Vercel"
+  testing: "Jest, React Testing Library, Playwright"

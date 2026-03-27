@@ -1,0 +1,85 @@
+# GymOps GitHub Integration Config
+# Used by BMAD agents for repo operations
+
+github:
+  owner: kunlefash
+
+  repos:
+    main:
+      name: GymOps
+      url: https://github.com/kunlefash/GymOps
+      description: "BMAD framework, planning artifacts, stories, sprint tracking"
+      purpose: "orchestration"
+
+    frontend:
+      name: gymops-frontend
+      url: https://github.com/kunlefash/gymops-frontend
+      description: "Next.js 15 + TypeScript + Tailwind CSS"
+      purpose: "source-code"
+      tech: ["next.js", "typescript", "tailwind", "react"]
+
+    backend:
+      name: gymops-backend
+      url: https://github.com/kunlefash/gymops-backend
+      description: "Node.js + TypeScript + Express + Prisma"
+      purpose: "source-code"
+      tech: ["node.js", "typescript", "express", "prisma", "postgresql"]
+
+  default_branch: main
+
+  branch_strategy:
+    feature: "feat/{story-key}"
+    bugfix: "fix/{story-key}"
+    hotfix: "hotfix/{description}"
+
+  pr_settings:
+    auto_review: true
+    require_approval: true
+    reviewers: ["kunlefash"]
+    labels:
+      ai_generated: "ai-generated"
+      needs_review: "needs-review"
+      reviewed: "reviewed"
+
+  automation:
+    on_story_complete:
+      - determine_target_repo  # frontend vs backend based on story file list
+      - create_feature_branch
+      - push_code
+      - open_pr
+      - trigger_code_review
+      - notify_owner
+
+    on_review_complete:
+      - post_review_comments_to_pr
+      - update_story_status
+      - label_pr
+
+    on_pr_merged:
+      - update_story_to_done
+      - update_sprint_status
+
+  # How dev agent determines which repo to push to
+  repo_routing:
+    rules:
+      - pattern: "src/app/**"
+        repo: frontend
+      - pattern: "src/components/**"
+        repo: frontend
+      - pattern: "src/hooks/**"
+        repo: frontend
+      - pattern: "src/services/**"
+        repo: frontend
+      - pattern: "src/routes/**"
+        repo: backend
+      - pattern: "src/controllers/**"
+        repo: backend
+      - pattern: "src/middleware/**"
+        repo: backend
+      - pattern: "prisma/**"
+        repo: backend
+      - pattern: "tests/e2e/**"
+        repo: frontend
+      - pattern: "tests/integration/**"
+        repo: backend
+    default: frontend
