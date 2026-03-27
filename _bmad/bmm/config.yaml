@@ -1,31 +1,15 @@
-user:
-  name: Adekunle
-  handle: kunlefash
-  language: en
+# BMM Module Configuration
+# Project: GymOps
+# Stack: Next.js 15, Node.js, PostgreSQL, Prisma, Vercel
 
-project:
-  name: GymOps
-  description: "Gym operations management platform"
-  repo: "kunlefash/GymOps"
+project_name: GymOps
+user_skill_level: intermediate
+planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"
+implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"
+project_knowledge: "{project-root}/docs"
 
-tech_stack:
-  frontend: "Next.js 15, TypeScript strict, Tailwind CSS"
-  backend: "Node.js, Express/Fastify, TypeScript"
-  database: "PostgreSQL with Prisma ORM"
-  deployment: "Vercel (frontend), Vercel Serverless Functions (API)"
-  testing: "Jest, Playwright (E2E), React Testing Library"
-
-paths:
-  output: "_bmad-output"
-  planning: "_bmad-output/planning-artifacts"
-  implementation: "_bmad-output/implementation-artifacts"
-  stories: "_bmad-output/implementation-artifacts/stories"
-  sprints: "_bmad-output/implementation-artifacts/sprints"
-
-conventions:
-  branch_prefix: "feat/"
-  story_branch: "story/{story_key}"
-  pr_template: true
-  tdd_required: true
-  min_test_coverage: 80
-  commit_style: "conventional"
+# Core Configuration Values
+user_name: Adekunle
+communication_language: English
+document_output_language: English
+output_folder: "{project-root}/_bmad-output"

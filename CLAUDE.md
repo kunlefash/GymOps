@@ -13,29 +13,29 @@ GymOps is a gym operations management platform built with the BMAD (Build, Metho
 
 ## BMAD Framework
 
-### Quick Start Commands
+### Agent Commands
 | Command | Description |
 |---------|-------------|
 | `/bmad-help` | Show all available commands |
-| `/bmad-pm` | Activate PM agent (John) |
-| `/bmad-dev` | Activate Dev agent (Amelia) |
-| `/bmad-qa` | Activate QA agent (Quinn) |
-| `/bmad-architect` | Activate Architect agent (Winston) |
-| `/bmad-techwriter` | Activate Tech Writer agent (Maya) |
-| `/bmad-ux` | Activate UX Designer agent (Sage) |
+| `/bmad-agent-pm` | Activate PM agent (John) |
+| `/bmad-agent-dev` | Activate Dev agent (Amelia) |
+| `/bmad-agent-qa` | Activate QA agent (Quinn) |
+| `/bmad-agent-architect` | Activate Architect agent (Winston) |
+| `/bmad-agent-techwriter` | Activate Tech Writer agent (Maya) |
+| `/bmad-agent-ux` | Activate UX Designer agent (Sage) |
 
-### Workflow Commands
+### Workflow Shortcut Commands
 | Command | Phase | Description |
 |---------|-------|-------------|
-| `/bmad-create-brief` | 1. Analysis | Create product brief |
-| `/bmad-create-prd` | 2. Planning | Create PRD from brief |
+| `/bmad-create-prd` | 2. Planning | Create PRD (launches PM agent workflow) |
 | `/bmad-validate-prd` | 2. Planning | Validate existing PRD |
+| `/bmad-edit-prd` | 2. Planning | Edit existing PRD |
 | `/bmad-create-architecture` | 3. Solutioning | Design system architecture |
 | `/bmad-create-epics` | 3. Solutioning | Decompose PRD into epics/stories |
 | `/bmad-check-readiness` | 3. Solutioning | Validate readiness for dev |
-| `/bmad-dev-story {key}` | 4. Implementation | TDD development of a story |
-| `/bmad-code-review {key}` | 4. Implementation | AI code review |
-| `/bmad-qa-test {key}` | 4. Implementation | Generate tests |
+| `/bmad-dev-story` | 4. Implementation | TDD development of a story |
+| `/bmad-code-review` | 4. Implementation | AI code review |
+| `/bmad-qa-test` | 4. Implementation | Generate tests |
 | `/bmad-sprint-plan` | 4. Sprint Ops | Plan a sprint |
 | `/bmad-sprint-status` | 4. Sprint Ops | View sprint progress |
 

@@ -19,7 +19,10 @@
       "Bash(brew install:*)",
       "Bash(git branch:*)",
       "Bash(gh repo:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find /Users/mac/Agentic_SDLC/zonepay.superrepo/.claude -type f -name *.md)"
     ]
   }
 }
