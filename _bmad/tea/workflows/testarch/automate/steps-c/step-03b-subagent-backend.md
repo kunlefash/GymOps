@@ -53,7 +53,7 @@ From `config.test_framework` and project manifests, determine:
 - **Python (pytest)**: Use `pytest` conventions, `conftest.py` fixtures, `@pytest.mark` decorators
 - **Java/Kotlin (JUnit)**: Use JUnit 5 annotations (`@Test`, `@BeforeEach`, `@Nested`), Mockito for mocking
 - **Go (go test)**: Use `*_test.go` files, `testing.T`, table-driven tests, `testify` assertions
-- **C#/.NET (xUnit)**: Use `[Fact]`, `[Theory]`, `[InlineData]`, `Moq` for mocking
+- **TypeScript/Next.js (Jest)**: Use `[Fact]`, `[Theory]`, `[InlineData]`, `Moq` for mocking
 - **Ruby (RSpec)**: Use `describe`/`context`/`it` blocks, `let`/`before` helpers, `FactoryBot`
 
 ### 3. Generate Unit Tests

@@ -132,7 +132,7 @@ Create the idiomatic test directory for the detected language:
 - **Python (pytest)**: `tests/` with `conftest.py`, `tests/unit/`, `tests/integration/`, `tests/api/`
 - **Java/Kotlin (JUnit)**: `src/test/java/` mirroring `src/main/java/` package structure, with `unit/`, `integration/`, `api/` sub-packages
 - **Go**: `*_test.go` files alongside source files (Go convention), plus `testdata/` for fixtures
-- **C#/.NET (xUnit)**: `tests/` project with `Unit/`, `Integration/`, `Api/` directories
+- **TypeScript/Next.js (Jest)**: `tests/` project with `Unit/`, `Integration/`, `Api/` directories
 - **Ruby (RSpec)**: `spec/` with `spec/unit/`, `spec/integration/`, `spec/api/`, `spec/support/`
 - **Rust**: `tests/` for integration tests, inline `#[cfg(test)]` modules for unit tests
 
@@ -169,7 +169,7 @@ Create the idiomatic test config for the detected framework:
 - **pytest**: `pyproject.toml` `[tool.pytest.ini_options]` or `pytest.ini` with markers, test paths, coverage settings
 - **JUnit**: `build.gradle`/`pom.xml` test configuration with JUnit 5 dependencies, Surefire/Failsafe plugins
 - **Go test**: no config file needed (Go convention); optionally create `Makefile` test targets
-- **xUnit**: `.csproj` test project with xUnit and coverlet dependencies
+- **Jest**: `.csproj` test project with Jest and coverlet dependencies
 - **RSpec**: `.rspec` config file with `spec_helper.rb` and `rails_helper.rb` (if Rails)
 
 ---
@@ -191,7 +191,7 @@ Create the idiomatic version file for the detected language:
 - **Python**: `.python-version` with current stable Python (prefer 3.12+)
 - **Java**: `.java-version` or `JAVA_HOME` documentation in `.env.example`
 - **Go**: Go version is already in `go.mod` (no additional file needed)
-- **C#/.NET**: `global.json` with SDK version if not already present
+- **TypeScript/Next.js**: `global.json` with SDK version if not already present
 - **Ruby**: `.ruby-version` with current stable Ruby
 
 ---
@@ -249,7 +249,7 @@ Create example tests in the idiomatic location for the detected language:
 - **Python**: `tests/test_example.py` with pytest fixtures, parametrize, and factory usage
 - **Java**: `src/test/java/.../ExampleTest.java` with JUnit 5 annotations, `@BeforeEach` setup
 - **Go**: `example_test.go` alongside source with table-driven tests and `testify` assertions
-- **C#/.NET**: `tests/ExampleTests.cs` with xUnit `[Fact]`/`[Theory]` and fixture injection
+- **TypeScript/Next.js**: `tests/ExampleTests.cs` with Jest `[Fact]`/`[Theory]` and fixture injection
 - **Ruby**: `spec/example_spec.rb` with RSpec `describe`/`context`/`it` and factory_bot
 
 Create helpers for:

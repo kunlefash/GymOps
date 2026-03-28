@@ -3,7 +3,7 @@ name: bmad-documentation
 description: >
   Headless CI skill that generates durable documentation artifacts (ADRs,
   README updates, runbooks) from completed BMAD initiative work and commits
-  them to the super-repo. Complements zone-docs-consolidation (interactive)
+  them to the repo. Complements zone-docs-consolidation (interactive)
   as the automated pipeline counterpart. Triggered after zone-retrospective
   confirms epic completion.
 version: 1.0.0
@@ -22,7 +22,7 @@ triggers:
 
 Autonomous, CI-friendly skill that reads completed BMAD initiative artifacts, verifies decisions against implementation, and emits durable documentation (ADRs, runbooks, README updates) into the canonical `docs/` hierarchy. Does NOT invoke interactive BMAD workflows.
 
-**Input**: `epic_jira_key` (e.g. `CLSDLC-1`), optional `initiative_title` override
+**Input**: `epic_github-issues_key` (e.g. `CLSDLC-1`), optional `initiative_title` override
 **Output**: `###ZONE-DOCS-RESULT###{"status":"0","epic_key":"CLSDLC-1","artifacts":{...}}###ZONE-DOCS-RESULT###` on success, `status:"1"` on failure.
 
 **Non-negotiable rules** (inherited from zone-docs-consolidation):
@@ -37,7 +37,7 @@ Autonomous, CI-friendly skill that reads completed BMAD initiative artifacts, ve
 
 ## Phase 0 — Sync & Validate Workspace
 
-**0.1 Pull latest super-repo:**
+**0.1 Pull latest repo:**
 ```bash
 git pull --rebase origin $(git rev-parse --abbrev-ref HEAD) || git pull --no-rebase origin $(git rev-parse --abbrev-ref HEAD)
 ```
@@ -47,7 +47,7 @@ git pull --rebase origin $(git rev-parse --abbrev-ref HEAD) || git pull --no-reb
 git status --porcelain
 ```
 
-**HALT protocol:** If sync fails OR unexpected dirty state is found in `modules/*` (dirty submodule pointers not related to this initiative), set `{blocker_summary}` = `"WORKSPACE_DIRTY: <paths>"`, post Jira comment on `{epic_jira_key}` (see Phase 8 comment format), and exit `status:"1"`. Do NOT proceed.
+**HALT protocol:** If sync fails OR unexpected dirty state is found in `modules/*` (dirty module pointers not related to this initiative), set `{blocker_summary}` = `"WORKSPACE_DIRTY: <paths>"`, post GitHub Issues comment on `{epic_github-issues_key}` (see Phase 8 comment format), and exit `status:"1"`. Do NOT proceed.
 
 ---
 
@@ -59,7 +59,7 @@ Load the following artifacts in order. If any required file is missing, note the
 ```
 _bmad-output/implementation-artifacts/sprint-status.yaml
 ```
-Find the epic matching `{epic_jira_key}`. Verify status is `complete` or `done`. If not complete, exit `status:"1"` with `blocker_summary: "EPIC_NOT_COMPLETE"`.
+Find the epic matching `{epic_github-issues_key}`. Verify status is `complete` or `done`. If not complete, exit `status:"1"` with `blocker_summary: "EPIC_NOT_COMPLETE"`.
 
 **1.2 Architecture document — extract ADR sections:**
 ```
@@ -71,7 +71,7 @@ Locate every `### ADR-NNN:` section. Capture: title, status, context, decision d
 ```
 _bmad-output/planning-artifacts/epics.md
 ```
-Identify which submodules (`modules/`) are in scope for this epic.
+Identify which modules (`modules/`) are in scope for this epic.
 
 **1.4 Story files — identify runbook content and touched modules:**
 ```
@@ -98,19 +98,19 @@ Evaluate each branch. Record which phases to execute.
 │  YES → Execute Phase 4 (runbook generation)
 │  NO  → Skip Phase 4
 │
-├─ Stories touch submodules (File List entries under modules/)?
-│  YES → Check each touched submodule README → Execute Phase 5
+├─ Stories touch modules (File List entries under modules/)?
+│  YES → Check each touched module README → Execute Phase 5
 │  NO  → Skip Phase 5
 │
 ├─ Any ADR or runbook touches compliance-sensitive modules?
-│  Compliance-sensitive: zone.zonepay, zone.cardlesstransactionprocessing,
-│  zonepay.settlement, zone.pggateway, zonedc.settlement,
-│  zone.smartcontracts.sui, zone.settlement.sui,
-│  zone.admin.api (if touching funding/liquidation paths)
+│  Compliance-sensitive: zone.gymops, src/services,
+│  gymops.settlement, src/services, ,
+│  , ,
+│  src/app/api (if touching funding/liquidation paths)
 │  YES → Add ## Compliance Note section to affected artifacts
 │  NO  → No compliance section needed
 │
-└─ Always → Execute Phase 6 (index updates), Phase 7 (quality gate), Phase 8 (commit + Jira)
+└─ Always → Execute Phase 6 (index updates), Phase 7 (quality gate), Phase 8 (commit + GitHub Issues)
 ```
 
 ---
@@ -134,7 +134,7 @@ For each `### ADR-NNN:` section found in architecture.md:
 
 **3.4 Render ADR file:**
 Write to `docs/adr/ADR-{NNNN}-{slug}.md` using `templates/adr.md`.
-Fields to populate: Status, Date (today's date), Initiative (epic Jira key + title), Modules Affected, Context, Decision, Consequences.
+Fields to populate: Status, Date (today's date), Initiative (epic story key + title), Modules Affected, Context, Decision, Consequences.
 
 **3.5 Compliance check:**
 If the ADR's affected modules include any compliance-sensitive module → add `## Compliance Note` section using the format specified in the Compliance Rules section below. Cite the specific regulatory body and rule. State whether CBN notification is required.
@@ -175,22 +175,22 @@ Create or update `docs/runbooks/index.md` — a table with columns: Runbook, Pur
 
 ## Phase 5 — Generate README Updates
 
-For each submodule touched by the initiative (identified in Phase 1 story File Lists):
+For each module touched by the initiative (identified in Phase 1 story File Lists):
 
 **5.1 Check README existence:**
-Read `modules/{submodule}/README.md`.
+Read `modules/{module}/README.md`.
 
-- **If missing**: Create using `templates/readme-section.md` scaffolded for the module type. Determine type from: `.csproj` files (.NET service), `package.json` (frontend), `*.yaml` Helm charts (infra), Python files (infrastructure), `*.move` (Sui), Playwright (QA).
+- **If missing**: Create using `templates/readme-section.md` scaffolded for the module type. Determine type from: `.csproj` files (Next.js service), `package.json` (frontend), `*.yaml` Helm charts (infra), Python files (infrastructure), `*.move` (Sui), Playwright (QA).
 - **If exists**: Add or update only the sections that changed. Do NOT rewrite sections unrelated to this initiative.
 
 **5.2 Section update rules:**
-- Follow zone.zonepay README section order as gold standard: Overview → Architecture → Key Features → Core Entities → Configuration → Docker Setup → API Endpoints → Troubleshooting.
+- Follow zone.gymops README section order as gold standard: Overview → Architecture → Key Features → Core Entities → Configuration → Docker Setup → API Endpoints → Troubleshooting.
 - Add new configuration keys, changed architecture descriptions, new integration points introduced by this initiative.
 - Prefer adding a named subsection (e.g. `### PostgreSQL Support`) over rewriting the entire Configuration section.
 - Do not rewrite existing accurate sections.
 
 **5.3 Modules currently missing READMEs** (as of 2026-03-09):
-`zone.clientdashboard`, `zone.clientdashboard-automation`, `zone.sui.indexer`, `zone.zonepaydeeplink`, `zonepay.helmtemplate`, `zonepay.helmvalues`, `zoneqa_automation`.
+`src/components`, `src/components-automation`, `indexer`, `zone.gymopsdeeplink`, `gymops.helmtemplate`, `gymops.helmvalues`, `tests/e2e`.
 If this initiative touches any of these, create the README from scratch using the appropriate template variant.
 
 ---
@@ -253,11 +253,11 @@ Complete this checklist before committing. For each item, verify it explicitly �
 **Mismatch reporting:**
 - [ ] All implementation-vs-plan mismatches explicitly documented in the output summary
 
-If any item fails and is not fixable → do NOT commit. Post Jira comment with `status:"1"` and a description of the blocking issue.
+If any item fails and is not fixable → do NOT commit. Post GitHub Issues comment with `status:"1"` and a description of the blocking issue.
 
 ---
 
-## Phase 8 — Commit & Jira
+## Phase 8 — Commit & GitHub Issues
 
 **8.1 Stage changed files:**
 ```bash
@@ -268,7 +268,7 @@ Do NOT stage unrelated dirty files.
 
 **8.2 Commit:**
 ```bash
-git commit -m "{epic_jira_key}: {initiative_title} - documentation generation
+git commit -m "{epic_github-issues_key}: {initiative_title} - documentation generation
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 ```
@@ -278,22 +278,22 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 git push origin $(git rev-parse --abbrev-ref HEAD)
 ```
 
-**8.4 Jira doc ticket spec (output as YAML block in response):**
+**8.4 GitHub Issues doc ticket spec (output as YAML block in response):**
 ```yaml
 project: CLSDLC
 type: Task
 summary: "[Doc Review] {initiative_title} documentation artifacts"
 description: |
-  Auto-generated documentation from BMAD initiative {epic_jira_key}:
+  Auto-generated documentation from BMAD initiative {epic_github-issues_key}:
   - ADRs: {adr_count} files at docs/adr/
   - Runbooks: {runbook_count} files at docs/runbooks/
   - README updates: {readme_count} modules
   Review for accuracy and completeness before marking done.
 labels: [documentation, auto-generated]
-parent: {epic_jira_key}
+parent: {epic_github-issues_key}
 ```
 
-**8.5 Post Jira comment on epic** (use MCP `addCommentToJiraIssue`):
+**8.5 Post GitHub Issues comment on epic** (use MCP `addCommentToGitHub IssuesIssue`):
 ```
 bmad-documentation completed for {initiative_title}.
 
@@ -307,7 +307,7 @@ Doc review ticket spec included in skill output. Assign to team lead for review.
 
 **8.6 Emit sentinel:**
 ```
-###ZONE-DOCS-RESULT###{"status":"0","epic_key":"{epic_jira_key}","artifacts":{"adrs":[...],"runbooks":[...],"readme_updates":[...]}}###ZONE-DOCS-RESULT###
+###ZONE-DOCS-RESULT###{"status":"0","epic_key":"{epic_github-issues_key}","artifacts":{"adrs":[...],"runbooks":[...],"readme_updates":[...]}}###ZONE-DOCS-RESULT###
 ```
 
 ---
@@ -318,14 +318,14 @@ Doc review ticket spec included in skill output. Assign to team lead for review.
 
 | Module | Compliance Domain |
 |--------|------------------|
-| zone.zonepay | Transaction processing — CBN, NIBSS |
-| zone.cardlesstransactionprocessing | Transaction processing — CBN, NIBSS |
-| zonepay.settlement | Settlement — CBN RTGS, NIBSS settlement windows |
-| zone.pggateway | ISO 8583 routing and auth — CBN, NIBSS |
-| zonedc.settlement | Smart contract settlement — CBN |
-| zone.smartcontracts.sui | Blockchain settlement — CBN |
-| zone.settlement.sui | Blockchain settlement — CBN |
-| zone.admin.api | Sui gateway (compliance applies if touching funding/liquidation) |
+| zone.gymops | Transaction processing — CBN, NIBSS |
+| src/services | Transaction processing — CBN, NIBSS |
+| gymops.settlement | Settlement — CBN RTGS, NIBSS settlement windows |
+| src/services | ISO 8583 routing and auth — CBN, NIBSS |
+|  | Smart contract settlement — CBN |
+|  | Blockchain settlement — CBN |
+|  | Blockchain settlement — CBN |
+| src/app/api | Sui gateway (compliance applies if touching funding/liquidation) |
 
 **Compliance Note format** (from zone-compliance/SKILL.md):
 ```markdown
@@ -354,7 +354,7 @@ At the end of every run, output a structured summary:
 ```markdown
 ## bmad-documentation Run Summary
 
-**Epic**: {epic_jira_key} — {initiative_title}
+**Epic**: {epic_github-issues_key} — {initiative_title}
 **Date**: {YYYY-MM-DD}
 **Status**: {SUCCESS | FAILED | PARTIAL}
 

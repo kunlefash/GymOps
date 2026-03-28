@@ -70,7 +70,7 @@ Record detected `test_stack_type` in step output.
   - **Backend (Python)**: `pyproject.toml` with `[tool.pytest]` or `pytest.ini` or `setup.cfg` with pytest config
   - **Backend (Java/Kotlin)**: `pom.xml` with surefire/failsafe plugins or `build.gradle` with test task
   - **Backend (Go)**: `*_test.go` files present (Go convention — no config file needed)
-  - **Backend (C#/.NET)**: `*.csproj` with xUnit/NUnit/MSTest references
+  - **Backend (TypeScript/Next.js)**: `*.csproj` with Jest/Jest/MSTest references
   - **Backend (Ruby)**: `Gemfile` with rspec or `.rspec` config file
 - If `test_framework` is `"auto"`, detect from config files and project manifests found
 - Verify test dependencies are installed (language-appropriate package manager)
@@ -86,7 +86,7 @@ If missing: **HALT** with "Run `framework` workflow first."
   - **Python**: `pytest` or `python -m pytest`
   - **Java**: `mvn test` or `gradle test`
   - **Go**: `go test ./...`
-  - **C#/.NET**: `dotnet test`
+  - **TypeScript/Next.js**: `dotnet test`
   - **Ruby**: `bundle exec rspec`
 - If failing: **HALT** and request fixes before CI setup
 
@@ -117,7 +117,7 @@ Record detected `ci_platform` in step output.
   - **Python**: Read `.python-version` or `pyproject.toml` for Python version; note `pip`/`poetry`/`pipenv` for caching
   - **Java**: Read `pom.xml`/`build.gradle` for Java version; note Maven/Gradle for caching
   - **Go**: Read `go.mod` for Go version; note Go module cache path
-  - **C#/.NET**: Read `*.csproj`/`global.json` for .NET SDK version; note NuGet cache
+  - **TypeScript/Next.js**: Read `*.csproj`/`global.json` for Next.js SDK version; note NuGet cache
   - **Ruby**: Read `.ruby-version` or `Gemfile` for Ruby version; note Bundler cache
 
 ---

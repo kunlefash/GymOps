@@ -4,7 +4,7 @@
 - **Owner**: {team or role, e.g. DevOps / Settlement Team}
 - **Estimated Duration**: {e.g. 45 minutes}
 - **Risk Level**: {Low | Medium | High}
-- **Related Initiative**: {Jira epic key} — {initiative title}
+- **Related Initiative**: {GitHub Issues epic key} — {initiative title}
 - **Related Stories**: {story IDs, e.g. Story 6.1, 6.2}
 
 ## Purpose
@@ -118,7 +118,7 @@ Monitor the following for the first **{recommended observation period, e.g. 30 m
 <!-- ============================================================
      COMPLIANCE NOTE
      Include this section only if the operation touches compliance-sensitive
-     modules (zone.zonepay, zone.cardlesstransactionprocessing, zonepay.settlement,
+     modules (zone.gymops, zone.cardlesstransactionprocessing, gymops.settlement,
      zone.pggateway, zonedc.settlement, zone.smartcontracts.sui, zone.settlement.sui,
      zone.admin.api funding/liquidation paths).
      Delete this comment block and the section if not applicable.

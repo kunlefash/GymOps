@@ -70,7 +70,7 @@ If a story is UNESTIMABLE, use: { "story_key": { "status": "UNESTIMABLE", "reaso
 
 | Variable | Source |
 | -------- | ------ |
-| `{project-root}` | Repo root (e.g. `/apps/zonepay.global`) |
+| `{project-root}` | Repo root (e.g. `/apps/gymops.global`) |
 | `{sprint_status}` | `{project-root}/_bmad-output/implementation-artifacts/sprint-status.yaml` |
 | `{epics_path}` | `{project-root}/_bmad-output/planning-artifacts/epics.md` |
 | `{story_dir}` | `{project-root}/_bmad-output/implementation-artifacts/stories` |

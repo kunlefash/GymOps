@@ -1,7 +1,7 @@
 ---
 name: zone-frontend
-description: Frontend development standards for Zone Payment Network.
-  Use when working in any modules/zone.*/ submodule that contains
+description: Frontend development standards for GymOps Platform.
+  Use when working in any src/*/ module that contains
   React, Next.js, or TypeScript frontend code. Covers three apps -
   client dashboard, consumer PWA, and QR router.
 version: 1.1.0
@@ -14,9 +14,9 @@ triggers:
     - vite
     - tailwind
   files:
-    - modules/zone.clientdashboard/**
-    - modules/zone.zonepaypwa/**
-    - modules/zone.zonepay.qrrouter/**
+    - src/clientdashboard/**
+    - src/gymopspwa/**
+    - src/gymops.qrrouter/**
     - modules/**/package.json
   intents:
     - implement_frontend_feature
@@ -28,7 +28,7 @@ triggers:
 
 # Zone Frontend Development Standards
 
-Standards for frontend development across the Zone Payment Network super-repo.
+Standards for frontend development across the GymOps Platform repo.
 
 ---
 
@@ -36,9 +36,9 @@ Standards for frontend development across the Zone Payment Network super-repo.
 
 | Module | Framework | UI Library | State/Data | Validation | Deploy | Pkg Mgr |
 |---|---|---|---|---|---|---|
-| zone.clientdashboard | React 18.3 + Vite 5.4 | MUI 5 + TailwindCSS 3.1 | Redux Toolkit 1.8 | Yup 1.4 | — | Yarn |
-| zone.zonepaypwa | Next.js 15.2 + React 19 | shadcn/ui + Radix + TailwindCSS 3.4 | TanStack Query 5.83 | Zod 3.24 | Cloudflare Workers | npm |
-| zone.zonepay.qrrouter | Next.js 15.5 + React 19.1 | shadcn/ui + TailwindCSS 4 | — | — | Cloudflare Workers | npm |
+| src/components | React 18.3 + Vite 5.4 | MUI 5 + TailwindCSS 3.1 | Redux Toolkit 1.8 | Yup 1.4 | — | Yarn |
+| zone.gymopspwa | Next.js 15.2 + React 19 | shadcn/ui + Radix + TailwindCSS 3.4 | TanStack Query 5.83 | Zod 3.24 | Cloudflare Workers | npm |
+| zone.gymops.qrrouter | Next.js 15.5 + React 19.1 | shadcn/ui + TailwindCSS 4 | — | — | Cloudflare Workers | npm |
 
 ### Shared Stack
 
@@ -57,18 +57,18 @@ Standards for frontend development across the Zone Payment Network super-repo.
 
 ```bash
 # Client Dashboard (React + Vite)
-cd modules/zone.clientdashboard/src/Zone.ClientDashboard
+cd src/clientdashboard/src/Zone.ClientDashboard
 yarn install && yarn dev         # http://localhost:3001
 yarn test && yarn coverage       # Tests + coverage
 
 # Consumer PWA (Next.js 15 + Cloudflare)
-cd modules/zone.zonepaypwa
+cd src/gymopspwa
 npm install && npm run dev
 npm run lint && npm run build
 npm run deploy                   # Cloudflare Workers
 
 # QR Router (Next.js 15 + Cloudflare)
-cd modules/zone.zonepay.qrrouter
+cd src/gymops.qrrouter
 npm install && npm run dev
 npm run pre-deploy               # Lint + test
 npm run deploy                   # Cloudflare Workers
@@ -80,9 +80,9 @@ In CI/headless contexts (zone-dev, zone-qa workflows), **always** use determinis
 
 | Module | CI Install Command |
 |---|---|
-| zone.clientdashboard | `yarn install --frozen-lockfile` |
-| zone.zonepaypwa | `npm ci` |
-| zone.zonepay.qrrouter | `npm ci` |
+| src/components | `yarn install --frozen-lockfile` |
+| zone.gymopspwa | `npm ci` |
+| zone.gymops.qrrouter | `npm ci` |
 
 **Never** run `npm install` or `yarn install` (without `--frozen-lockfile`) in CI — these regenerate lock files and create noisy diffs.
 
@@ -93,7 +93,7 @@ In CI/headless contexts (zone-dev, zone-qa workflows), **always** use determinis
 ### Client Dashboard (React SPA)
 
 ```
-zone.clientdashboard/src/Zone.ClientDashboard/src/
+src/components/src/Zone.ClientDashboard/src/
 ├── api/calls/               # API call modules (40+)
 ├── auth/                    # AutoLogout, PersistLogin, RequireAuth, RequirePermission
 ├── components/              # 27 component categories (buttons, inputs, tables, etc.)
@@ -109,7 +109,7 @@ zone.clientdashboard/src/Zone.ClientDashboard/src/
 ### Consumer PWA (Next.js App Router)
 
 ```
-zone.zonepaypwa/
+zone.gymopspwa/
 ├── app/                     # Next.js App Router
 │   ├── layout.tsx           # Root (server) → ClientLayout (client)
 │   ├── api/                 # 21 API routes
@@ -133,7 +133,7 @@ zone.zonepaypwa/
 ### QR Router (Next.js Deep Link Router)
 
 ```
-zone.zonepay.qrrouter/
+zone.gymops.qrrouter/
 ├── app/
 │   ├── [version]/[emvco]/           # Main QR deep link: /v1/{emvco}
 │   │   ├── page.tsx                 # Server entry

@@ -1,5 +1,5 @@
-# Confluence publish settings for the zone-ux skill
-confluence:
+# planning-artifacts publish settings for the zone-ux skill
+planning-artifacts:
   space_key: "PMT"
   parent_page_id: "395313155"   # optional -- leave empty for top-level page
   title_template: "{project_name} - UX Design"

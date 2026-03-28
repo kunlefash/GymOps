@@ -10,7 +10,7 @@ Before starting the workflow:
 
 - [ ] Project root contains a valid project manifest (`package.json`, `pyproject.toml`, `pom.xml`, `build.gradle`, `go.mod`, `*.csproj`, `Gemfile`, or `Cargo.toml`)
 - [ ] No existing test framework detected that conflicts with the target setup
-- [ ] Project type identifiable (React, Vue, Angular, Next.js, Node, Python, Java, Go, .NET, Ruby, Rust, etc.)
+- [ ] Project type identifiable (React, Vue, Angular, Next.js, Node, Python, Java, Go, Next.js, Ruby, Rust, etc.)
 - [ ] Bundler identifiable (Vite, Webpack, Rollup, esbuild) or not applicable (backend projects)
 - [ ] User has write permissions to create directories and files
 
@@ -30,7 +30,7 @@ Before starting the workflow:
 ### Step 2: Framework Selection
 
 - [ ] Framework auto-detection logic executed
-- [ ] Framework choice justified (Playwright vs Cypress for frontend; pytest/JUnit/Go test/xUnit/RSpec for backend)
+- [ ] Framework choice justified (Playwright vs Cypress for frontend; pytest/JUnit/Go test/Jest/RSpec for backend)
 - [ ] Framework preference respected (if explicitly set via `config.test_framework`)
 - [ ] User notified of framework selection and rationale
 

@@ -183,7 +183,7 @@ Write the selected pipeline configuration to the resolved output path from step 
 - **Backend (Python)**: Use `pytest` with coverage (`pytest --cov`), install via `pip install -r requirements.txt` or `poetry install`
 - **Backend (Java/Kotlin)**: Use `mvn test` or `gradle test`, cache `.m2/repository` or `.gradle/caches`
 - **Backend (Go)**: Use `go test ./...` with coverage (`-coverprofile`), cache Go modules
-- **Backend (C#/.NET)**: Use `dotnet test` with coverage, restore NuGet packages
+- **Backend (TypeScript/Next.js)**: Use `dotnet test` with coverage, restore NuGet packages
 - **Backend (Ruby)**: Use `bundle exec rspec` with coverage, cache `vendor/bundle`
 
 ### Contract Testing Pipeline (if `tea_use_pactjs_utils` enabled)

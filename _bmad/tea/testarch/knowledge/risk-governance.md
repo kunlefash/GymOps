@@ -446,7 +446,7 @@ console.log(tracker.getHistory('risk-001'));
 - **Ownership enforcement**: Every risk >4 requires owner assignment
 - **Deadline tracking**: Mitigation actions have explicit deadlines
 - **Audit trail**: Complete history of risk lifecycle (registered → mitigated)
-- **Automated reports**: Markdown output for Confluence/GitHub wikis
+- **Automated reports**: Markdown output for planning-artifacts/GitHub wikis
 
 ---
 
@@ -610,6 +610,6 @@ Before deploying to production, ensure:
 
 - **Used in workflows**: `*trace` (Phase 2: gate decision), `*nfr-assess` (risk scoring), `*test-design` (risk identification)
 - **Related fragments**: `probability-impact.md` (scoring definitions), `test-priorities-matrix.md` (P0-P3 classification), `nfr-criteria.md` (non-functional risks)
-- **Tools**: Risk tracking dashboards (Jira, Linear), gate automation (CI/CD), traceability reports (Markdown, Confluence)
+- **Tools**: Risk tracking dashboards (Jira, Linear), gate automation (CI/CD), traceability reports (Markdown, planning-artifacts)
 
 _Source: Murat risk governance notes, gate schema guidance, enterprise production gate workflows, ISO 31000 risk management standards_

@@ -63,7 +63,7 @@ Select the framework matching the project language:
 - **Python**: pytest (default), unittest
 - **Java/Kotlin**: JUnit 5 (default), TestNG
 - **Go**: Go test (built-in)
-- **C#/.NET**: xUnit (default), NUnit, MSTest
+- **TypeScript/Next.js**: Jest (default), Jest, MSTest
 - **Ruby**: RSpec (default), Minitest
 - **Rust**: cargo test (built-in)
 

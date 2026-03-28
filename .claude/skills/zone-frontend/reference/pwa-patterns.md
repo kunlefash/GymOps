@@ -1,9 +1,9 @@
-# PWA-Specific Patterns (zone.zonepaypwa)
+# PWA-Specific Patterns (zone.gymopspwa)
 
 ## Next.js Middleware (Auth + CORS + Device Detection)
 
 ```typescript
-// middleware.ts — real pattern from zone.zonepaypwa
+// middleware.ts — real pattern from zone.gymopspwa
 export function middleware(request: NextRequest) {
   // 1. Inject Bearer token from cookie into headers
   const token = request.cookies.get('token')?.value;
@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
 ```typescript
 // Server Component (default — no 'use client')
 // app/my-page/page.tsx
-export const metadata: Metadata = { title: 'My Page | ZonePay' };
+export const metadata: Metadata = { title: 'My Page | GymOps' };
 export default function MyPage() { return <MyPageClient />; }
 
 // Client Component ('use client' required)

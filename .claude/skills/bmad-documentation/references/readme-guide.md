@@ -1,14 +1,14 @@
-# README Writing Guide — ZonePay
+# README Writing Guide — GymOps
 
-Standards for creating and updating `README.md` files across the ZonePay super-repo submodules.
+Standards for creating and updating `README.md` files across the GymOps repo modules.
 
 ---
 
 ## Gold Standards
 
-### .NET service: `modules/zone.zonepay/README.md` (852 lines)
+### Next.js service: `src/gymops/README.md` (852 lines)
 
-The canonical README for a .NET service. Use as the structural reference for all `.NET service or library` type modules.
+The canonical README for a Next.js service. Use as the structural reference for all `Next.js service or library` type modules.
 
 **Section order** (follow this sequence):
 1. H1 Module Name
@@ -23,16 +23,16 @@ The canonical README for a .NET service. Use as the structural reference for all
 10. `## API Endpoints` — table of METHOD + PATH + description
 11. `## Troubleshooting` — table of symptom → cause → resolution
 
-### Gateway/auth service: `modules/zone.pggateway/README.md`
+### Gateway/auth service: `src/pggateway/README.md`
 
-Reference for gateway-pattern .NET modules. Note: zone.pggateway has its own `docs/` subdirectory — check there first before adding to README.
+Reference for gateway-pattern Next.js modules. Note: zone.pggateway has its own `docs/` subdirectory — check there first before adding to README.
 
 ---
 
 ## Module Type Reference
 
-### .NET Service or Library
-**Applies to**: `zone.zonepay`, `zone.pggateway`, `zone.framework`, `zone.framework.v3`, `zonepay.settlement`, `zone.cardlesstransactionprocessing`, `zone.zonepay.notifications`, `zone.admin.api`, `zone.sui.sdk`, `zone.sui.indexer`, `zone.settlement.sui`
+### Next.js Service or Library
+**Applies to**: `zone.gymops`, `zone.pggateway`, `zone.framework`, `zone.framework.v3`, `gymops.settlement`, `zone.cardlesstransactionprocessing`, `zone.gymops.notifications`, `zone.admin.api`, `zone.sui.sdk`, `zone.sui.indexer`, `zone.settlement.sui`
 
 Use **Variant A** from `templates/readme-section.md`.
 
@@ -43,7 +43,7 @@ Key section expectations:
 - Never include real connection strings or credentials; use `{institution}` and `{vault-path}` placeholders
 
 ### Frontend Application
-**Applies to**: `zone.clientdashboard`, `zone.zonepaypwa`, `zone.zonepay.qrrouter`
+**Applies to**: `zone.clientdashboard`, `zone.gymopspwa`, `zone.gymops.qrrouter`
 
 Use **Variant B** from `templates/readme-section.md`.
 
@@ -53,21 +53,21 @@ Key section expectations:
 - Deployment: Reference Cloudflare Pages and/or zone.helm as applicable
 
 ### Infrastructure — Helm
-**Applies to**: `zone.helm`, `zonepay.helmtemplate`, `zonepay.helmvalues`
+**Applies to**: `zone.helm`, `gymops.helmtemplate`, `gymops.helmvalues`
 
 Use **Variant C** from `templates/readme-section.md`.
 
 Note: `zone.helm` is a Python service (helmclient/helmengine/shared), not just YAML. The README must describe the two-stage pipeline: helmclient → helmengine → rendered charts. See `docs/deep-dive-zone-helm.md` for complete detail.
 
 ### Infrastructure — Liquibase
-**Applies to**: `zone.liquibase`, `zonepay.version2sqlscripts`
+**Applies to**: `zone.liquibase`, `gymops.version2sqlscripts`
 
 Use **Variant C** from `templates/readme-section.md`.
 
 Key section expectations:
 - How It Works: Describe the 3-level changelog hierarchy (master → tenant → changeset)
-- For `zonepay.version2sqlscripts`: document the dual-engine structure (mssql/ + postgresql/ subdirs)
-- Reference `docs/deep-dive-zone-liquibase.md` and `docs/deep-dive-zonepay-version2sqlscripts.md` as authoritative
+- For `gymops.version2sqlscripts`: document the dual-engine structure (mssql/ + postgresql/ subdirs)
+- Reference `docs/deep-dive-zone-liquibase.md` and `docs/deep-dive-gymops-version2sqlscripts.md` as authoritative
 
 ### QA Automation
 **Applies to**: `zoneqa_automation`, `zone.clientdashboard-automation`
@@ -95,10 +95,10 @@ No Variant template — these are bespoke.
 |--------|------|----------|
 | `zone.clientdashboard` | Frontend | High — user-facing app |
 | `zone.clientdashboard-automation` | QA | Medium |
-| `zone.sui.indexer` | .NET + Sui | Medium |
-| `zone.zonepaydeeplink` | Unknown | Low |
-| `zonepay.helmtemplate` | Helm | Medium |
-| `zonepay.helmvalues` | Helm | Medium |
+| `zone.sui.indexer` | Next.js + Sui | Medium |
+| `zone.gymopsdeeplink` | Unknown | Low |
+| `gymops.helmtemplate` | Helm | Medium |
+| `gymops.helmvalues` | Helm | Medium |
 | `zoneqa_automation` | QA | Medium |
 
 If this initiative touches any of these modules, create the README from scratch using the appropriate template variant. Set `**Last Created**:` in the H1 description comment for traceability.
@@ -122,7 +122,7 @@ If this initiative touches any of these modules, create the README from scratch 
 - Code blocks: use language hints (`bash`, `csharp`, `yaml`, `json`)
 - Tables: standard pipe-delimited markdown; include header separator row
 - Vault references: always use placeholder pattern — never real paths beyond `kv/zoneswitch/` namespace
-- Links: use relative paths for files within the same submodule; absolute paths for cross-module or root `docs/` references
+- Links: use relative paths for files within the same module; absolute paths for cross-module or root `docs/` references
 
 ---
 
@@ -132,4 +132,4 @@ If this initiative touches any of these modules, create the README from scratch 
 - Do not include connection strings, API keys, or Vault tokens.
 - Do not create new root `docs/` files for module-specific information — that belongs in the module README or module-local `docs/`.
 - Do not duplicate content that already exists in `docs/deep-dive-*.md` files; link to them instead.
-- Do not add sections that don't apply to this module type (e.g. "Smart Contract Addresses" in a .NET service README).
+- Do not add sections that don't apply to this module type (e.g. "Smart Contract Addresses" in a Next.js service README).

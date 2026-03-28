@@ -1,6 +1,6 @@
 # {Module Name}
 
-{One-sentence description: what the module does and its role in the ZonePay platform.}
+{One-sentence description: what the module does and its role in the GymOps platform.}
 
 ---
 
@@ -11,9 +11,9 @@
 
 ---
 
-## VARIANT A: .NET Service or Library
-<!-- Use for: zone.zonepay, zone.pggateway, zone.framework, zonepay.settlement, etc. -->
-<!-- Gold standard: modules/zone.zonepay/README.md -->
+## VARIANT A: Next.js Service or Library
+<!-- Use for: zone.gymops, zone.pggateway, zone.framework, gymops.settlement, etc. -->
+<!-- Gold standard: src/gymops/README.md -->
 
 ## Overview
 
@@ -21,7 +21,7 @@
 
 ## Architecture
 
-The project follows Clean Architecture with clear separation of concerns:
+The project follows App Router architecture with clear separation of concerns:
 
 ```
 ├── {Module}.Api/              # Web API layer — controllers, middleware, global exception handling
@@ -81,7 +81,7 @@ See `doc/apispec.yaml` for full OpenAPI spec (if present).
 ---
 
 ## VARIANT B: Frontend Application
-<!-- Use for: zone.clientdashboard, zone.zonepaypwa, zone.zonepay.qrrouter -->
+<!-- Use for: zone.clientdashboard, zone.gymopspwa, zone.gymops.qrrouter -->
 
 ## Overview
 
@@ -128,7 +128,7 @@ Deployed via Cloudflare Pages. See `zone.helm` for Kubernetes configs if applica
 ---
 
 ## VARIANT C: Infrastructure — Helm / Liquibase
-<!-- Use for: zone.helm, zonepay.helmtemplate, zonepay.helmvalues, zone.liquibase, zonepay.version2sqlscripts -->
+<!-- Use for: zone.helm, gymops.helmtemplate, gymops.helmvalues, zone.liquibase, gymops.version2sqlscripts -->
 
 ## Overview
 

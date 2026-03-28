@@ -1,6 +1,6 @@
 # CI/CD Integration
 
-## zoneqa_automation — Bitbucket Pipelines
+## zoneqa_automation — GitHub Actionss
 
 ```bash
 npm test                   # All tests
@@ -18,7 +18,7 @@ npm run lint               # Lint check
 - **5-shard parallel**: Full regression via `full-regression` custom pipeline
 - **PR/main**: Lint + pilot suite only
 
-## zone.clientdashboard-automation — Bitbucket Pipelines
+## zone.clientdashboard-automation — GitHub Actionss
 
 ```bash
 npx playwright test                          # All tests

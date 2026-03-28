@@ -19,8 +19,8 @@ import yaml
 # ---------------------------------------------------------------------------
 
 SENTINEL = "###ZONE-PREPARE-STORY-RESULT###"
-MODULE_REF_RE = re.compile(r"modules/([\w.]+)")
-SKILL_MAP_FILENAME = "submodule-skill-map.yaml"
+SRC_REF_RE = re.compile(r"(?:src|prisma|tests)/[\w/.-]+")
+SKILL_MAP_FILENAME = "module-skill-map.yaml"
 READY_FOR_DEV_RE = re.compile(r"Status:\s*ready-for-dev", re.IGNORECASE)
 
 
@@ -117,11 +117,11 @@ def die(message: str, code: int = 1) -> None:
     sys.exit(code)
 
 
-def get_default_branch(submodule_name: str, repo_root: Path) -> str:
-    """Get the default branch for a submodule from .gitmodules, fallback to 'development'."""
+def get_default_branch(module_name: str, repo_root: Path) -> str:
+    """Get the default branch for a module from .gitmodules, fallback to 'development'."""
     try:
         result = git(
-            ["config", "-f", ".gitmodules", "--get", f"submodule.modules/{submodule_name}.branch"],
+            ["config", "-f", ".gitmodules", "--get", f"module.modules/{module_name}.branch"],
             cwd=str(repo_root),
             check=False,
         )
@@ -137,8 +137,8 @@ def get_default_branch(submodule_name: str, repo_root: Path) -> str:
 # Domain skill resolution
 # ---------------------------------------------------------------------------
 
-def resolve_domain_skills(submodule_names: List[str], repo_root: Path) -> List[Dict[str, Any]]:
-    """Map submodule names to domain skills via submodule-skill-map.yaml.
+def resolve_domain_skills(module_names: List[str], repo_root: Path) -> List[Dict[str, Any]]:
+    """Map module names to domain skills via module-skill-map.yaml.
 
     Returns a deduplicated list of dicts: {skill, path, exists}.
     Gracefully returns [] with a stderr warning if the map file is missing.
@@ -159,7 +159,7 @@ def resolve_domain_skills(submodule_names: List[str], repo_root: Path) -> List[D
     result: List[Dict[str, Any]] = []
     skills_base = repo_root / ".claude" / "skills"
 
-    for name in submodule_names:
+    for name in module_names:
         for skill in mappings.get(name, []):
             if skill in seen:
                 continue
@@ -204,14 +204,14 @@ def cmd_sync_superrepo(args: argparse.Namespace) -> int:
 
 def cmd_resolve(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key
+    story_key = args.story_key
 
-    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "jira-key-map.yaml"
+    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "story-key-map.yaml"
     data = read_yaml(map_path)
 
     active_project_key = data.get("active_project_key")
     if not active_project_key:
-        die("active_project_key not found in jira-key-map.yaml")
+        die("active_project_key not found in story-key-map.yaml")
 
     projects = data.get("projects", {})
     project = projects.get(active_project_key, {})
@@ -219,16 +219,16 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 
     bmad_id = None
     bmad_title = None
-    parent_jira_key = None
+    parent_story_key = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
             bmad_id = str(item["bmad_id"])
             bmad_title = str(item["bmad_title"])
-            parent_jira_key = item.get("parent_jira_key")
+            parent_story_key = item.get("parent_story_key")
             break
 
     if bmad_id is None:
-        die(f"Jira key '{jira_key}' not found in jira-key-map.yaml (project={active_project_key})")
+        die(f"story key '{story_key}' not found in story-key-map.yaml (project={active_project_key})")
 
     # Derive story_key: dots->dashes in bmad_id + '-' + slugify(title)
     story_key = bmad_id.replace(".", "-") + "-" + slugify(bmad_title)
@@ -258,10 +258,10 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 
     # --- Initiative lookup ---
     initiative_branch = None
-    if sprint_data and parent_jira_key:
+    if sprint_data and parent_story_key:
         epic_bmad_id = None
         for item in items:
-            if item.get("bmad_type") == "epic" and item.get("jira_key") == parent_jira_key:
+            if item.get("bmad_type") == "epic" and item.get("story_key") == parent_story_key:
                 epic_bmad_id = str(item["bmad_id"])
                 break
         if epic_bmad_id:
@@ -278,21 +278,21 @@ def cmd_resolve(args: argparse.Namespace) -> int:
         "bmad_title": bmad_title,
         "story_key": story_key,
         "story_file_path": str(story_file_path),
-        "jira_key": jira_key,
+        "story_key": story_key,
     }
-    if parent_jira_key:
-        result["parent_jira_key"] = parent_jira_key
+    if parent_story_key:
+        result["parent_story_key"] = parent_story_key
     if initiative_branch:
         result["initiative_branch"] = initiative_branch
 
     # --- Epic branch computation ---
     epic_branch = None
-    if parent_jira_key:
+    if parent_story_key:
         for item in items:
-            if item.get("bmad_type") == "epic" and item.get("jira_key") == parent_jira_key:
+            if item.get("bmad_type") == "epic" and item.get("story_key") == parent_story_key:
                 epic_bmad_id = str(item["bmad_id"]).replace(".", "-")
                 epic_key = epic_bmad_id + "-" + slugify(str(item["bmad_title"]))
-                epic_branch = f"agent/epic/{parent_jira_key}-{epic_key}"
+                epic_branch = f"agent/epic/{parent_story_key}-{epic_key}"
                 break
 
     if epic_branch:
@@ -314,7 +314,7 @@ def cmd_resolve_domain_skills(args: argparse.Namespace) -> int:
 
     if not epics_path.exists():
         print("warning: epics.md not found, proceeding without domain skills", file=sys.stderr)
-        emit_json({"domain_skills": [], "submodules": []})
+        emit_json({"domain_skills": [], "modules": []})
         return 0
 
     content = epics_path.read_text(encoding="utf-8")
@@ -330,7 +330,7 @@ def cmd_resolve_domain_skills(args: argparse.Namespace) -> int:
     match = story_header_pattern.search(content)
     if not match:
         print(f"warning: story section for '{bmad_id}' not found in epics.md", file=sys.stderr)
-        emit_json({"domain_skills": [], "submodules": []})
+        emit_json({"domain_skills": [], "modules": []})
         return 0
 
     # Extract section from match to next story/epic header or end of file
@@ -345,49 +345,49 @@ def cmd_resolve_domain_skills(args: argparse.Namespace) -> int:
     section = content[start:end]
 
     # Extract **Repo:** modules/{name} references
-    repo_matches = MODULE_REF_RE.findall(section)
+    repo_matches = SRC_REF_RE.findall(section)
 
     # Deduplicate while preserving order
     seen: set[str] = set()
-    submodule_names: List[str] = []
+    module_names: List[str] = []
     for name in repo_matches:
         if name not in seen:
             seen.add(name)
-            submodule_names.append(name)
+            module_names.append(name)
 
-    if not submodule_names:
+    if not module_names:
         print(f"warning: no module references found in story {bmad_id} section", file=sys.stderr)
-        emit_json({"domain_skills": [], "submodules": []})
+        emit_json({"domain_skills": [], "modules": []})
         return 0
 
-    domain_skills = resolve_domain_skills(submodule_names, repo_root)
+    domain_skills = resolve_domain_skills(module_names, repo_root)
 
     emit_json({
         "domain_skills": domain_skills,
-        "submodules": submodule_names,
+        "modules": module_names,
     })
     return 0
 
 
 # ---------------------------------------------------------------------------
-# checkout-submodules (Phase 2.7)
+# checkout-modules (Phase 2.7)
 # ---------------------------------------------------------------------------
 
-def cmd_checkout_submodules(args: argparse.Namespace) -> int:
-    """Checkout the best research branch in each submodule (read-only, no create/push)."""
+def cmd_checkout_modules(args: argparse.Namespace) -> int:
+    """Checkout the best research branch in each module (read-only, no create/push)."""
     repo_root = Path(args.repo_root).resolve()
     epic_branch = getattr(args, "epic_branch", None)
     initiative_branch = getattr(args, "initiative_branch", None)
 
     try:
-        submodules = json.loads(args.submodules)
+        modules = json.loads(args.modules)
     except json.JSONDecodeError as exc:
-        die(f"Invalid --submodules JSON: {exc}")
+        die(f"Invalid --modules JSON: {exc}")
 
     results = []
-    for name in submodules:
+    for name in modules:
         sub_path = repo_root / "modules" / name
-        entry: Dict[str, Any] = {"submodule": name, "status": "ok"}
+        entry: Dict[str, Any] = {"module": name, "status": "ok"}
 
         if not sub_path.is_dir():
             entry["status"] = "skipped"
@@ -398,16 +398,16 @@ def cmd_checkout_submodules(args: argparse.Namespace) -> int:
         sub_dir = str(sub_path)
 
         try:
-            # Initialize submodule if needed
-            git(["submodule", "update", "--init", f"modules/{name}"], cwd=str(repo_root))
+            # Initialize module if needed
+            git(["module", "update", "--init", f"modules/{name}"], cwd=str(repo_root))
         except subprocess.CalledProcessError as exc:
             entry["status"] = "error"
-            entry["error"] = f"submodule init failed: {exc.stderr.strip()}"
+            entry["error"] = f"module init failed: {exc.stderr.strip()}"
             results.append(entry)
             continue
 
-        git(["config", "user.name", "Zone AI Agent"], cwd=sub_dir)
-        git(["config", "user.email", "ai@zonenetwork.com"], cwd=sub_dir)
+        git(["config", "user.name", "GymOps AI Agent"], cwd=sub_dir)
+        git(["config", "user.email", "ai@gymops.dev"], cwd=sub_dir)
 
         try:
             git(["fetch", "origin"], cwd=sub_dir)
@@ -448,7 +448,7 @@ def cmd_checkout_submodules(args: argparse.Namespace) -> int:
 
         results.append(entry)
 
-    emit_json({"submodules": results, "count": len(results)})
+    emit_json({"modules": results, "count": len(results)})
     return 0
 
 
@@ -463,9 +463,9 @@ def cmd_resolve_nuget_deps(args: argparse.Namespace) -> int:
     initiative_branch = getattr(args, "initiative_branch", "") or ""
 
     try:
-        submodules = json.loads(args.submodules)
+        modules = json.loads(args.modules)
     except json.JSONDecodeError as exc:
-        die(f"Invalid --submodules JSON: {exc}")
+        die(f"Invalid --modules JSON: {exc}")
 
     # Load nuget-resolver config
     config_path = repo_root / ".claude" / "skills" / "nuget-resolver" / "config.yaml"
@@ -481,7 +481,7 @@ def cmd_resolve_nuget_deps(args: argparse.Namespace) -> int:
     dev_suffix = version_rules.get("dev_suffix", "-dev")
 
     # Strip "modules/" prefix for matching
-    sub_names = [s.replace("modules/", "") if s.startswith("modules/") else s for s in submodules]
+    sub_names = [s.replace("modules/", "") if s.startswith("modules/") else s for s in modules]
 
     dependencies = []
     for downstream in sub_names:
@@ -497,13 +497,13 @@ def cmd_resolve_nuget_deps(args: argparse.Namespace) -> int:
                 "packages": package_mappings.get(upstream, []),
             }
 
-            # Init upstream submodule (may not be initialized in CI)
-            git(["submodule", "update", "--init", f"modules/{upstream}"], cwd=str(repo_root), check=False)
+            # Init upstream module (may not be initialized in CI)
+            git(["module", "update", "--init", f"modules/{upstream}"], cwd=str(repo_root), check=False)
 
             if not upstream_path.is_dir():
                 dep_entry["build_tag"] = None
                 dep_entry["resolved_version"] = None
-                dep_entry["warning"] = f"upstream submodule modules/{upstream} not found"
+                dep_entry["warning"] = f"upstream module modules/{upstream} not found"
                 dependencies.append(dep_entry)
                 continue
 
@@ -528,7 +528,7 @@ def cmd_resolve_nuget_deps(args: argparse.Namespace) -> int:
                 git(["pull", "origin", default_br], cwd=str(upstream_path), check=False)
                 checked_out = default_br
 
-            # Get HEAD commit of upstream submodule
+            # Get HEAD commit of upstream module
             head_result = git(["rev-parse", "HEAD"], cwd=str(upstream_path), check=False)
             if head_result.returncode != 0:
                 dep_entry["build_tag"] = None
@@ -606,11 +606,11 @@ def cmd_resolve_nuget_deps(args: argparse.Namespace) -> int:
 
 def cmd_commit_superrepo(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key
+    story_key = args.story_key
     title = args.title
     cwd = str(repo_root)
 
-    commit_msg = f"{jira_key}: {title} - story preparation complete"
+    commit_msg = f"{story_key}: {title} - story preparation complete"
 
     # Stage _bmad-output/
     git(["add", "_bmad-output/"], cwd=cwd, check=False)
@@ -666,7 +666,7 @@ def cmd_commit_superrepo(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_transition_jira(args: argparse.Namespace) -> int:
-    jira_key = args.jira_key
+    story_key = args.story_key
     target_status = args.target_status
 
     # Resolve target status from config if --skill/--outcome provided
@@ -699,13 +699,13 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
         emit_json({
             "action": "skipped",
             "reason": "jira_agile.py not found",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
         return 0
 
     cmd = [
         sys.executable, str(jira_script),
-        "transition-issue", jira_key, target_status,
+        "transition-issue", story_key, target_status,
     ]
     if comment:
         cmd.extend(["--comment", comment])
@@ -734,13 +734,13 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
             emit_json({
                 "action": "warning",
                 "reason": f"transition failed: {result.stderr.strip() or result.stdout.strip()}",
-                "jira_key": jira_key,
+                "story_key": story_key,
             })
             return 0  # Non-fatal
 
         emit_json({
             "action": "transitioned",
-            "jira_key": jira_key,
+            "story_key": story_key,
             "target_status": target_status,
         })
 
@@ -749,14 +749,14 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
         emit_json({
             "action": "warning",
             "reason": "transition timed out",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
     except Exception as exc:
         print(f"warning: Jira transition error: {exc}", file=sys.stderr)
         emit_json({
             "action": "warning",
             "reason": str(exc),
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
 
     return 0  # Always non-fatal
@@ -767,8 +767,8 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_attach_story(args: argparse.Namespace) -> int:
-    """Phase 5.5: Attach story file to Jira issue (best-effort)."""
-    jira_key = args.jira_key
+    """Phase 5.5: Attach story file to story (best-effort)."""
+    story_key = args.story_key
     story_file = Path(args.story_file)
     repo_root = Path(args.repo_root).resolve()
 
@@ -777,7 +777,7 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
         emit_json({
             "action": "skipped",
             "reason": "story file not found",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
         return 0
 
@@ -788,13 +788,13 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
         emit_json({
             "action": "skipped",
             "reason": "jira_agile.py not found",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
         return 0
 
     cmd = [
         sys.executable, str(jira_script),
-        "attach-file", jira_key, str(story_file),
+        "attach-file", story_key, str(story_file),
     ]
 
     try:
@@ -815,13 +815,13 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
             emit_json({
                 "action": "warning",
                 "reason": f"attachment failed: {result.stderr.strip() or result.stdout.strip()}",
-                "jira_key": jira_key,
+                "story_key": story_key,
             })
             return 0  # Non-fatal
 
         emit_json({
             "action": "attached",
-            "jira_key": jira_key,
+            "story_key": story_key,
             "file": str(story_file),
         })
 
@@ -830,14 +830,14 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
         emit_json({
             "action": "warning",
             "reason": "attachment timed out",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
     except Exception as exc:
         print(f"warning: Jira attachment error: {exc}", file=sys.stderr)
         emit_json({
             "action": "warning",
             "reason": str(exc),
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
 
     return 0  # Always non-fatal
@@ -880,8 +880,8 @@ def main() -> int:
     p_sync.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # resolve
-    p_resolve = subparsers.add_parser("resolve", help="Phase 1: Resolve Jira key to story metadata")
-    p_resolve.add_argument("--jira-key", required=True, help="Jira issue key (e.g. CLSDLC-25)")
+    p_resolve = subparsers.add_parser("resolve", help="Phase 1: Resolve story key to story metadata")
+    p_resolve.add_argument("--story-key", required=True, help="story key (e.g. CLSDLC-25)")
     p_resolve.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # resolve-domain-skills
@@ -889,16 +889,16 @@ def main() -> int:
     p_domain.add_argument("--bmad-id", required=True, help="BMAD story ID (e.g. 2.1)")
     p_domain.add_argument("--repo-root", default=".", help="Repository root directory")
 
-    # checkout-submodules
-    p_checkout = subparsers.add_parser("checkout-submodules", help="Phase 2.7: Checkout research branches in submodules")
-    p_checkout.add_argument("--submodules", required=True, help="JSON array of submodule names")
+    # checkout-modules
+    p_checkout = subparsers.add_parser("checkout-modules", help="Phase 2.7: Checkout research branches in modules")
+    p_checkout.add_argument("--modules", required=True, help="JSON array of module names")
     p_checkout.add_argument("--epic-branch", default=None, help="Epic branch to prefer over initiative")
     p_checkout.add_argument("--initiative-branch", default=None, help="Initiative branch to prefer")
     p_checkout.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # resolve-nuget-deps
     p_nuget = subparsers.add_parser("resolve-nuget-deps", help="Phase 2.8: Resolve cross-repo NuGet dependencies")
-    p_nuget.add_argument("--submodules", required=True, help="JSON array of submodule paths (e.g. modules/zone.zonepay)")
+    p_nuget.add_argument("--modules", required=True, help="JSON array of module paths (e.g. modules/zone.zonepay)")
     p_nuget.add_argument("--branch", default="", help="Current epic/feature branch name")
     p_nuget.add_argument("--initiative-branch", default="", help="Initiative/parent branch name (fallback)")
     p_nuget.add_argument("--repo-root", default=".", help="Repository root directory")
@@ -906,13 +906,13 @@ def main() -> int:
     # commit-superrepo
     p_commit = subparsers.add_parser("commit-superrepo", help="Phase 4: Commit and push super-repo")
     p_commit.add_argument("--story-key", required=True, help="Story key identifier")
-    p_commit.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_commit.add_argument("--story-key", required=True, help="story key")
     p_commit.add_argument("--title", required=True, help="BMAD story title for commit message")
     p_commit.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # transition-jira
-    p_jira = subparsers.add_parser("transition-jira", help="Phase 5: Transition Jira issue (best-effort)")
-    p_jira.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_jira = subparsers.add_parser("transition-jira", help="Phase 5: Transition story (best-effort)")
+    p_jira.add_argument("--story-key", required=True, help="story key")
     p_jira.add_argument("--target-status", default=None, help="Target Jira status (direct override)")
     p_jira.add_argument("--skill", default=None, help="Skill name for config lookup (e.g. 'zone-dev')")
     p_jira.add_argument("--outcome", default=None, help="Outcome name for config lookup (e.g. 'success')")
@@ -925,8 +925,8 @@ def main() -> int:
     p_jira.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # attach-story
-    p_attach = subparsers.add_parser("attach-story", help="Phase 5.5: Attach story file to Jira issue")
-    p_attach.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_attach = subparsers.add_parser("attach-story", help="Phase 5.5: Attach story file to story")
+    p_attach.add_argument("--story-key", required=True, help="story key")
     p_attach.add_argument("--story-file", required=True, help="Path to story markdown file")
     p_attach.add_argument("--repo-root", default=".", help="Repository root directory")
 
@@ -942,7 +942,7 @@ def main() -> int:
         "sync-superrepo": cmd_sync_superrepo,
         "resolve": cmd_resolve,
         "resolve-domain-skills": cmd_resolve_domain_skills,
-        "checkout-submodules": cmd_checkout_submodules,
+        "checkout-modules": cmd_checkout_modules,
         "resolve-nuget-deps": cmd_resolve_nuget_deps,
         "commit-superrepo": cmd_commit_superrepo,
         "transition-jira": cmd_transition_jira,

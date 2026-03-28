@@ -1,10 +1,10 @@
-# QR Router-Specific Patterns (zone.zonepay.qrrouter)
+# QR Router-Specific Patterns (zone.gymops.qrrouter)
 
 ## URL Structure
 
 ```
-Main:     https://qr.zonepay.link/v{version}/{emvco}
-Download: https://qr.zonepay.link/redirect/{memberId}/{version}/{emvco}
+Main:     https://qr.gymops.link/v{version}/{emvco}
+Download: https://qr.gymops.link/redirect/{memberId}/{version}/{emvco}
 ```
 
 ## Adding a New Bank

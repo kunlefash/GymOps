@@ -7,7 +7,7 @@ Use zone-estimator skill for effort estimation, then map to time-based Fibonacci
 Fibonacci only:
 - 1, 2, 3, 5, 8, 13
 
-Time-based semantics (Jira Agile alignment):
+Time-based semantics (GitHub Issues Agile alignment):
 - 1: Trivial (< 2 hours)
 - 2: Small (half day)
 - 3: Medium (~ 1 day)

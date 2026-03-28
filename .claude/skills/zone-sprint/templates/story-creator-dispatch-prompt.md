@@ -49,6 +49,6 @@ Report back: story ID, key, file path, status (ready-for-dev), summary of contex
 | Variable | Source |
 | -------- | ------ |
 | `{story_key}` | From Wave 1 selected stories (e.g. `2-2-msc-and-zone-fee-configuration`) |
-| `{project-root}` | Repo root (e.g. `/apps/zonepay.global`) |
+| `{project-root}` | Repo root (e.g. `/apps/gymops.global`) |
 | `{story_dir}` | `{project-root}/_bmad-output/implementation-artifacts/stories` |
 | `{sprint_status}` | `{project-root}/_bmad-output/implementation-artifacts/sprint-status.yaml` |

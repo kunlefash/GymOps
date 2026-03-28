@@ -1,10 +1,10 @@
-# Confluence + Jira publish defaults for zone-bug-fix skill
-confluence:
+# planning-artifacts + GitHub Issues publish defaults for zone-bug-fix skill
+planning-artifacts:
   space_key: "PMT"
   parent_page_id: "395313155"
   title_template: "{project_name} - Bug Fix"
 
-jira:
+github-issues:
   atlassian_server: "Atlassian"
   project_key: "CLSDLC"
   project_key_derivation: false
@@ -13,5 +13,5 @@ jira:
   require_acceptance_criteria: true
   embed_references_inline: true
   mapping_strategy: "separate-sidecar"
-  mapping_file: "{implementation_artifacts}/jira-key-map.yaml"
+  mapping_file: "{implementation_artifacts}/story-key-map.yaml"
   persist_urls: true

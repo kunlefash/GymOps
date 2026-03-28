@@ -1,4 +1,4 @@
-# Runbook Writing Guide — ZonePay
+# Runbook Writing Guide — GymOps
 
 How to write, place, and classify operational runbooks from BMAD initiative stories.
 
@@ -43,7 +43,7 @@ Use `templates/runbook-entry.md` as the base. All sections are required unless e
 - **Owner**: team or role responsible (not a person — people change)
 - **Estimated Duration**: realistic wall-clock time
 - **Risk Level**: Low / Medium / High — inform the operator's preparation
-- **Related Initiative**: Jira epic key for traceability
+- **Related Initiative**: GitHub Issues epic key for traceability
 - **Related Stories**: story IDs for tooling cross-references
 
 ### 2. Purpose
@@ -94,10 +94,10 @@ Required when the runbook touches a compliance-sensitive module. See SKILL.md §
 
 | Claim | What to verify | Where to look |
 |-------|---------------|---------------|
-| Liquibase changelog paths | `settlementpartnerchangelog.yaml` and `settlementpartnerchangelog-postgresql.yaml` exist | `modules/zonepay.version2sqlscripts/` |
-| `zone.liquibase` CLI commands | Python CLI entry point and `update` command | `modules/zone.liquibase/` |
+| Liquibase changelog paths | `settlementpartnerchangelog.yaml` and `settlementpartnerchangelog-postgresql.yaml` exist | `modules/gymops.version2sqlscripts/` |
+| `zone.liquibase` CLI commands | Python CLI entry point and `update` command | `src/liquibase/` |
 | Vault path pattern | `secret/zone/{institution}/database` with `connectionString` and `databaseType` | Config files or Vault integration tests |
-| `kubectl rollout restart` targets | Deployment names in Helm values | `modules/zonepay.helmvalues/` |
+| `kubectl rollout restart` targets | Deployment names in Helm values | `modules/gymops.helmvalues/` |
 | Rollback triggers (error rate >5%, latency >20%) | Architecture document — cross-reference with Grafana dashboard names | `_bmad-output/planning-artifacts/architecture.md` §Migration Rollback |
 
 **Key open issues from Story 6-1 review** (address before publishing):
@@ -106,11 +106,11 @@ Required when the runbook touches a compliance-sensitive module. See SKILL.md §
 - MEDIUM: Add explicit Liquibase CLI command example (e.g. `zone.liquibase update --changelog-file settlementpartnerchangelog-postgresql.yaml`)
 - LOW: Remove stray `|` pipe characters from Post-Migration Monitoring section
 
-**Compliance Note**: YES — touches `zonepay.settlement` and `zone.pggateway`. Vault-secured connection strings are required by CBN PSV 2025. CBN notification not required for a migration operational procedure that keeps the same security posture.
+**Compliance Note**: YES — touches `gymops.settlement` and `zone.pggateway`. Vault-secured connection strings are required by CBN PSV 2025. CBN notification not required for a migration operational procedure that keeps the same security posture.
 
 ---
 
-## ZonePay Operational Contexts
+## GymOps Operational Contexts
 
 Runbooks are expected in these areas based on the platform's operational surface:
 

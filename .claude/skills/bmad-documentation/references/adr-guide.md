@@ -1,6 +1,6 @@
-# ADR Writing Guide — ZonePay
+# ADR Writing Guide — GymOps
 
-How to write, number, and classify Architecture Decision Records for the ZonePay super-repo.
+How to write, number, and classify Architecture Decision Records for the GymOps repo.
 
 ---
 
@@ -31,10 +31,10 @@ One of: `Proposed` | `Accepted` | `Deprecated` | `Superseded by ADR-{NNNN}`
 ISO 8601: `YYYY-MM-DD`. Use the date the decision was accepted (or last amended), not the date of writing.
 
 ### Initiative
-The Jira epic key and title. Provides the decision's traceability back to a sprint/planning artifact.
+The GitHub Issues epic key and title. Provides the decision's traceability back to a sprint/planning artifact.
 
 ### Modules Affected
-List all `modules/{submodule}` entries impacted. Be specific — this drives the compliance check.
+List all `modules/{module}` entries impacted. Be specific — this drives the compliance check.
 
 ### Context
 Why this decision was needed. What constraint, problem, or trade-off forced a choice. Keep factual. Do not paste planning narrative. 2–5 sentences.
@@ -64,13 +64,13 @@ Conditional — include only when Modules Affected includes a compliance-sensiti
 
 **Source**: `_bmad-output/planning-artifacts/architecture.md` §ADR-001
 
-**Evidence verified against**: `modules/zone.framework/src/Zone.Framework/Database/IDbConnectionFactory.cs`, `modules/zone.framework/src/Zone.Framework/Database/DatabaseType.cs`, DI registration in `Program.cs` of affected services.
+**Evidence verified against**: `src/framework/src/Zone.Framework/Database/IDbConnectionFactory.cs`, `src/framework/src/Zone.Framework/Database/DatabaseType.cs`, DI registration in `Program.cs` of affected services.
 
 **Key content summary**:
 
 - **Decision**: `IDbConnectionFactory` abstraction with Vault-only connection string sourcing. Provider resolved via priority: ENV `DATABASE_PROVIDER` → config `DatabaseType` key → connection string inference (`Host=` = PostgreSQL, otherwise SQL Server).
-- **Modules Affected**: `zone.framework`, `zonepay.settlement`, `zone.pggateway`, `zone.cardlesstransactionprocessing`
-- **Compliance Note required**: YES — touches `zonepay.settlement` and `zone.pggateway`. CBN PSV 2025 requires payment system operators to use secure credential storage. Vault enforces this; connection strings are never in config files. CBN notification not required (internal security architecture change).
+- **Modules Affected**: `zone.framework`, `gymops.settlement`, `zone.pggateway`, `zone.cardlesstransactionprocessing`
+- **Compliance Note required**: YES — touches `gymops.settlement` and `zone.pggateway`. CBN PSV 2025 requires payment system operators to use secure credential storage. Vault enforces this; connection strings are never in config files. CBN notification not required (internal security architecture change).
 
 **Evidence standard check**: Before writing this ADR, the agent read:
 1. `IDbConnectionFactory` interface implementation
@@ -84,7 +84,7 @@ Conditional — include only when Modules Affected includes a compliance-sensiti
 
 **Source**: `_bmad-output/planning-artifacts/architecture.md` §ADR-005 (Amended 2026-01-20)
 
-**Evidence verified against**: `modules/zone.framework/tests/Zone.Tests/Integration/` — `DockerAvailability`, `SqlServerContainerFixture`, xUnit Collection Fixtures, `[SkippableFact]` usage.
+**Evidence verified against**: `src/framework/tests/Zone.Tests/Integration/` — `DockerAvailability`, `SqlServerContainerFixture`, Jest Collection Fixtures, `[SkippableFact]` usage.
 
 **Key content summary**:
 
@@ -101,7 +101,7 @@ Conditional — include only when Modules Affected includes a compliance-sensiti
 
 ---
 
-## ZonePay-Specific Decision Categories
+## GymOps-Specific Decision Categories
 
 Group ADRs by these categories when writing the initiative's first ADR (for context in the `docs/adr/index.md` Category column):
 

@@ -28,9 +28,9 @@ HUMAN_REVIEW_TASK_RE = re.compile(
     re.MULTILINE,
 )
 
-# Bitbucket PR URL pattern
+# GitHub PR URL pattern
 PR_URL_RE = re.compile(
-    r"https://bitbucket\.org/([^/]+)/([^/]+)/pull-requests/(\d+)"
+    r"https://github\.org/([^/]+)/([^/]+)/pull-requests/(\d+)"
 )
 
 
@@ -55,23 +55,23 @@ def slugify(text: str) -> str:
     return result.strip("-")
 
 
-def _resolve_story_file(jira_key: str, repo_root: Path) -> Path:
-    """Resolve a Jira key to its story file path via jira-key-map.yaml."""
-    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "jira-key-map.yaml"
+def _resolve_story_file(story_key: str, repo_root: Path) -> Path:
+    """Resolve a story key to its story file path via story-key-map.yaml."""
+    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "story-key-map.yaml"
     data = read_yaml(map_path)
     active_project_key = data.get("active_project_key")
     if not active_project_key:
-        die("active_project_key not found in jira-key-map.yaml")
+        die("active_project_key not found in story-key-map.yaml")
     items = data.get("projects", {}).get(active_project_key, {}).get("items", [])
     bmad_id = None
     bmad_title = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
             bmad_id = str(item["bmad_id"])
             bmad_title = str(item["bmad_title"])
             break
     if bmad_id is None:
-        die(f"Jira key '{jira_key}' not found as story in jira-key-map.yaml")
+        die(f"story key '{story_key}' not found as story in story-key-map.yaml")
     story_key = bmad_id.replace(".", "-") + "-" + slugify(bmad_title)
     return repo_root / "_bmad-output" / "implementation-artifacts" / "stories" / f"{story_key}.md"
 
@@ -88,7 +88,7 @@ def die(message: str, code: int = 1) -> None:
 
 
 def _resolve_bb_auth() -> Optional[str]:
-    """Resolve Bitbucket auth header. Prefers API token; falls back to app password."""
+    """Resolve GitHub auth header. Prefers API token; falls back to app password."""
     bb_email = os.environ.get("BB_EMAIL", "")
     bb_token = os.environ.get("BB_API_TOKEN", "")
     if bb_email and bb_token:
@@ -108,7 +108,7 @@ def _resolve_bb_auth() -> Optional[str]:
 
 
 def _bb_get(url: str, auth_header: str) -> Any:
-    """Perform an authenticated GET to the Bitbucket API; return parsed JSON."""
+    """Perform an authenticated GET to the GitHub API; return parsed JSON."""
     req = urllib.request.Request(
         url,
         headers={
@@ -131,7 +131,7 @@ def _bb_get(url: str, auth_header: str) -> Any:
 # ---------------------------------------------------------------------------
 
 def cmd_fetch_pr_comments(args: argparse.Namespace) -> int:
-    """Fetch all non-deleted comments from a Bitbucket PR and emit JSON.
+    """Fetch all non-deleted comments from a GitHub PR and emit JSON.
 
     Auth: BB_EMAIL + BB_API_TOKEN (preferred) or BB_USERNAME + BB_APP_PASSWORD.
     Paginates via the 'next' link until all pages are exhausted.
@@ -158,7 +158,7 @@ def cmd_fetch_pr_comments(args: argparse.Namespace) -> int:
     if not m:
         die(
             f"Cannot parse PR URL '{pr_url}'. "
-            "Expected: https://bitbucket.org/{{workspace}}/{{repo_slug}}/pull-requests/{{pr_id}}"
+            "Expected: https://github.org/{{workspace}}/{{repo_slug}}/pull-requests/{{pr_id}}"
         )
 
     workspace = m.group(1)
@@ -169,13 +169,13 @@ def cmd_fetch_pr_comments(args: argparse.Namespace) -> int:
     auth_header = _resolve_bb_auth()
     if auth_header is None:
         die(
-            "Bitbucket credentials not configured. "
+            "GitHub credentials not configured. "
             "Set BB_EMAIL + BB_API_TOKEN, or BB_USERNAME + BB_APP_PASSWORD."
         )
 
     # Paginate through all comments
     base_url = (
-        f"https://api.bitbucket.org/2.0/repositories/"
+        f"https://api.github.org/2.0/repositories/"
         f"{workspace}/{repo_slug}/pullrequests/{pr_id}/comments"
         f"?pagelen=100"
     )
@@ -252,7 +252,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     if story_file_arg:
         story_file = Path(story_file_arg)
     else:
-        story_file = _resolve_story_file(args.jira_key, Path(args.repo_root).resolve())
+        story_file = _resolve_story_file(args.story_key, Path(args.repo_root).resolve())
 
     if not story_file.exists():
         die(f"Story file not found: {story_file}")
@@ -315,12 +315,12 @@ def main() -> int:
     # fetch-pr-comments
     p_fetch = subparsers.add_parser(
         "fetch-pr-comments",
-        help="Fetch all non-deleted comments from a Bitbucket PR",
+        help="Fetch all non-deleted comments from a GitHub PR",
     )
     p_fetch.add_argument(
         "--pr-url",
         required=True,
-        help="Full Bitbucket PR URL (https://bitbucket.org/{workspace}/{repo}/pull-requests/{id})",
+        help="Full GitHub PR URL (https://github.org/{workspace}/{repo}/pull-requests/{id})",
     )
     p_fetch.add_argument(
         "--repo-root",
@@ -339,9 +339,9 @@ def main() -> int:
         help="Path to BMAD story markdown file",
     )
     p_status.add_argument(
-        "--jira-key",
+        "--story-key",
         default=None,
-        help="Jira issue key (fallback resolution when --story-file omitted)",
+        help="story key (fallback resolution when --story-file omitted)",
     )
     p_status.add_argument(
         "--repo-root",

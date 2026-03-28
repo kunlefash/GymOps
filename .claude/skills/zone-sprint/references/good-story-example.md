@@ -51,19 +51,19 @@ So that **I only see and can perform the actions permitted for my role, and all 
 ## Tasks / Subtasks
 
 - [ ] Task 1: Backend — RBAC role constants and authorization policies (AC: 1, 2, 3, 5, 7)
-  - [ ] Define role constants or enum (`ZoneAdmin`, `AcquirerAdmin`, `IssuerAdmin`, `Merchant`, `Support`) in `modules/zone.zonepay` or `modules/zone.framework` (whichever owns shared auth contracts).
-  - [ ] Implement ASP.NET Core authorization policies per role (e.g. `Policy.ZoneAdmin`, `Policy.AcquirerAdmin`); register in DI at startup.
+  - [ ] Define role constants or enum (`ZoneAdmin`, `AcquirerAdmin`, `IssuerAdmin`, `Merchant`, `Support`) in `src/gymops` or `src/framework` (whichever owns shared auth contracts).
+  - [ ] Implement ASPNext.js Core authorization policies per role (e.g. `Policy.ZoneAdmin`, `Policy.AcquirerAdmin`); register in DI at startup.
   - [ ] Implement multi-tenant policy: extract `institutionId` and `terminalId` from JWT claims; attach to `ICurrentUserContext` or equivalent; enforce in all policies that are institution-scoped.
-  - [ ] Apply `[Authorize(Policy = "...")]` attributes to all existing and new controllers in `zone.zonepay`; remove any open endpoints that should be role-gated.
+  - [ ] Apply `[Authorize(Policy = "...")]` attributes to all existing and new controllers in `zone.gymops`; remove any open endpoints that should be role-gated.
   - [ ] Return HTTP 403 (`application/problem+json`) for all unauthorised requests; do not reveal whether the resource exists (no 404 leakage).
 
 - [ ] Task 2: Backend — audit trail for authorisation failures (AC: 6, 7)
   - [ ] On every HTTP 403 response, write an audit entry: `ActorId`, `Role`, `AttemptedRoute`, `HttpMethod`, `InstitutionId`, `Timestamp`.
-  - [ ] Use existing audit trail infrastructure in `modules/zone.framework`; do not create a new audit mechanism.
+  - [ ] Use existing audit trail infrastructure in `src/framework`; do not create a new audit mechanism.
   - [ ] Ensure audit entries are append-only and cannot be deleted via API.
 
 - [ ] Task 3: Dashboard — role-aware route guards (AC: 1, 2, 3, 5, 6)
-  - [ ] Implement a route guard component/HOC in `modules/zone.clientdashboard` that reads role and institution from the auth context (decoded JWT / session store).
+  - [ ] Implement a route guard component/HOC in `src/clientdashboard` that reads role and institution from the auth context (decoded JWT / session store).
   - [ ] Define a route permission map: each dashboard route mapped to the roles that may access it (Zone Admin, Acquirer Admin, Issuer Admin, Support).
   - [ ] Redirect users with insufficient role to an `/access-denied` page; never render a 404 for a role-mismatch.
   - [ ] Ensure the auth context is hydrated before any guarded route renders (handle loading state).
@@ -75,14 +75,14 @@ So that **I only see and can perform the actions permitted for my role, and all 
   - [ ] Do not rely solely on client-side gating — every mutation must be validated by the backend policy.
 
 - [ ] Task 5: PWA — route guards and terminal-scoped access (AC: 4, 6)
-  - [ ] Implement Next.js 15 route protection (middleware or per-layout auth check) in `modules/zone.zonepaypwa`.
+  - [ ] Implement Next.js 15 route protection (middleware or per-layout auth check) in `src/gymopspwa`.
   - [ ] On each PWA page load, verify the merchant's `terminalId` claim matches the resource being accessed; redirect to access-denied if mismatch.
   - [ ] Unauthenticated users are redirected to the PIN/activation login flow; expired sessions redirect to re-authentication.
   - [ ] All API calls from the PWA must include `institutionId` and `terminalId` from the auth token — never derive these from URL params alone.
 
 - [ ] Task 6: Tests (AC: 1–7)
-  - [ ] xUnit unit tests: one test per role-policy combination (authorised and unauthorised scenarios); verify tenant isolation in multi-tenant policy (Institution A token cannot pass Institution B policy).
-  - [ ] xUnit integration tests: HTTP 403 returned for each unauthorised role/endpoint combination; audit entry written on 403.
+  - [ ] Jest unit tests: one test per role-policy combination (authorised and unauthorised scenarios); verify tenant isolation in multi-tenant policy (Institution A token cannot pass Institution B policy).
+  - [ ] Jest integration tests: HTTP 403 returned for each unauthorised role/endpoint combination; audit entry written on 403.
   - [ ] Dashboard (Jest/RTL): route guard renders access-denied for unauthorised roles; renders content for authorised roles; `usePermission` hook gates controls correctly.
   - [ ] PWA (Jest/RTL): middleware rejects requests where `terminalId` claim does not match requested resource; unauthenticated redirect fires correctly.
   - [ ] No cross-tenant data leakage in any test scenario.
@@ -92,10 +92,10 @@ So that **I only see and can perform the actions permitted for my role, and all 
 ### Architecture Requirements
 
 **Module ownership (architecture requirements-to-structure mapping):**
-- **Backend:** `modules/zone.zonepay` — ASP.NET Core authorization policies, JWT claim extraction, multi-tenant enforcement. .NET 8, Clean Architecture.
-- **Shared auth contracts:** `modules/zone.framework` — if a shared `ICurrentUserContext`, role constants, or audit trail infrastructure exists here, use it. Do not duplicate.
-- **Dashboard:** `modules/zone.clientdashboard` — React + Vite; role-based route guards and feature gates; journey-based structure per `docs/journeys/dashboard`.
-- **PWA:** `modules/zone.zonepaypwa` — Next.js 15; merchant/terminal-scoped access; route protection via Next.js middleware.
+- **Backend:** `src/gymops` — ASPNext.js Core authorization policies, JWT claim extraction, multi-tenant enforcement. Next.js 15, App Router architecture.
+- **Shared auth contracts:** `src/framework` — if a shared `ICurrentUserContext`, role constants, or audit trail infrastructure exists here, use it. Do not duplicate.
+- **Dashboard:** `src/clientdashboard` — React + Vite; role-based route guards and feature gates; journey-based structure per `docs/journeys/dashboard`.
+- **PWA:** `src/gymopspwa` — Next.js 15; merchant/terminal-scoped access; route protection via Next.js middleware.
 
 **This story is the RBAC foundation for all of Epic 6.** Stories 6.2–6.4 (home/metrics, approval workflows, reporting) all depend on the route guards and permission system established here. Build the permission map and hooks to be extensible — new routes and features will be added in those stories.
 
@@ -115,13 +115,13 @@ So that **I only see and can perform the actions permitted for my role, and all 
 - Zone Admin is the only role that may query across institutions.
 - Cross-tenant isolation must be tested explicitly (Institution A token rejected for Institution B resources).
 
-**JWT claim structure (align with existing zone.zonepay auth implementation):**
+**JWT claim structure (align with existing zone.gymops auth implementation):**
 - `role`: one of `ZoneAdmin` | `AcquirerAdmin` | `IssuerAdmin` | `Merchant` | `Support`
 - `institutionId`: institution identifier (not present for Zone Admin, or present with a wildcard sentinel)
 - `terminalId`: terminal identifier (Merchant role only)
 - Vault provides the signing key for token validation — do not hard-code keys.
 
-**ASP.NET Core authorization pattern:**
+**ASPNext.js Core authorization pattern:**
 - Use `IAuthorizationPolicyProvider` with named policies per role.
 - Implement `IAuthorizationRequirement` + `AuthorizationHandler<T>` for any multi-tenant requirement (e.g. `SameInstitutionRequirement`).
 - Apply policies via `[Authorize(Policy = "AcquirerAdmin")]` attributes; avoid role-string comparisons scattered through controller logic.
@@ -140,7 +140,7 @@ So that **I only see and can perform the actions permitted for my role, and all 
 - Return Next.js `redirect()` to `/access-denied` or `/login` as appropriate; never a 404.
 
 **Audit trail:**
-- Attach a response-phase middleware/filter in ASP.NET Core that captures 403 responses and writes to the audit trail.
+- Attach a response-phase middleware/filter in ASPNext.js Core that captures 403 responses and writes to the audit trail.
 - Fields: `ActorId` (sub claim), `Role`, `HttpMethod`, `RequestPath`, `InstitutionId`, `Timestamp`.
 - Use existing audit trail infrastructure in `zone.framework`; do not create a new audit store.
 
@@ -151,33 +151,33 @@ So that **I only see and can perform the actions permitted for my role, and all 
 
 ### Library/Framework Versions
 
-- .NET 8; ASP.NET Core 8.x; `Microsoft.AspNetCore.Authorization`
+- Next.js 15; ASPNext.js Core 8.x; `Microsoft.AspNetCore.Authorization`
 - React 18/19 + Vite (dashboard)
 - Next.js 15 (PWA)
-- xUnit (backend tests); Jest + React Testing Library (frontend tests)
+- Jest (backend tests); Jest + React Testing Library (frontend tests)
 - Playwright (E2E via `zone.clientdashboard-automation`)
 
 ### File Structure Targets
 
-`modules/zone.zonepay/`
+`src/gymops/`
 - `[NEW] src/Infrastructure/Auth/Policies/ZoneAdminPolicy.cs`: Define requirements for Zone Admin cross-tenant access.
 - `[NEW] src/Infrastructure/Auth/Policies/AcquirerAdminPolicy.cs`: Define checks ensuring Acquirer Admin is restricted to their institution.
 - `[NEW] src/Infrastructure/Auth/Requirements/SameInstitutionRequirement.cs`: Shared requirement enforcing that token InstitutionId matches route InstitutionId.
 - `[MODIFY] src/API/Extensions/AuthorizationServiceExtensions.cs`: Register the new RBAC policies in the DI container.
 - `[NEW] src/API/Filters/AuditUnauthorisedAccessFilter.cs`: Middleware to catch 403s and write structured events to the audit trail.
 
-`modules/zone.clientdashboard/`
+`src/clientdashboard/`
 - `[NEW] src/auth/routePermissions.ts`: Centralized map defining which roles can access which dashboard routes.
 - `[NEW] src/auth/usePermission.ts`: React hook to hide/disable UI elements based on the current user's role.
 - `[NEW] src/auth/ProtectedRoute.tsx`: Route wrapper that redirects unauthorized users to an access denied page.
 
-`modules/zone.zonepaypwa/`
+`src/gymopspwa/`
 - `[MODIFY] middleware.ts`: Update Next.js edge middleware to intercept merchant routes and validate `terminalId` claims.
 
 ### Cross-Story Dependencies
 
 - **Stories 6.2–6.4** all depend on the route permission map and `usePermission` hook established here. Design both to be extensible (new routes/permissions added without rewriting the guard mechanism).
-- **All other epics** (1–5, 7) have backend endpoints that must already be protected by the policies defined here. Coordinate with those epics to ensure `[Authorize]` attributes are consistently applied when touching `zone.zonepay` controllers.
+- **All other epics** (1–5, 7) have backend endpoints that must already be protected by the policies defined here. Coordinate with those epics to ensure `[Authorize]` attributes are consistently applied when touching `zone.gymops` controllers.
 - **Epic 2 (Fee Config):** Issuer Admin policy is especially critical for convenience fee band routes (Story 2.1).
 - **Epic 4 (Disputes):** Acquirer Admin and Zone Admin policies used in Story 4.1 must align with the policy names defined here.
 
@@ -192,9 +192,9 @@ So that **I only see and can perform the actions permitted for my role, and all 
 
 ### Project Structure Notes
 
-- Backend auth infrastructure goes in `modules/zone.zonepay/src/Infrastructure/Auth/`; shared contracts (interfaces, role constants) in `modules/zone.framework` if that module owns shared auth primitives — check before duplicating.
-- Dashboard auth goes in `modules/zone.clientdashboard/src/auth/`; the `routePermissions.ts` map is the single source of truth for route access — do not gate routes inline in individual components.
-- PWA middleware goes at `modules/zone.zonepaypwa/middleware.ts` (Next.js root); edge-compatible only — no Node.js runtime imports.
+- Backend auth infrastructure goes in `src/gymops/src/Infrastructure/Auth/`; shared contracts (interfaces, role constants) in `src/framework` if that module owns shared auth primitives — check before duplicating.
+- Dashboard auth goes in `src/clientdashboard/src/auth/`; the `routePermissions.ts` map is the single source of truth for route access — do not gate routes inline in individual components.
+- PWA middleware goes at `src/gymopspwa/middleware.ts` (Next.js root); edge-compatible only — no Node.js runtime imports.
 - No DB migration required for this story (RBAC is claim/policy-based, not stored in the application DB).
 
 ### References

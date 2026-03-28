@@ -28,7 +28,19 @@
       "Bash(head -10 /Users/mac/Agentic_SDLC/zonepay.superrepo/_bmad/tea/agents/*.md)",
       "Bash(cat:*)",
       "Bash(__NEW_LINE_63dad3c52ac3763b__ echo:*)",
-      "Bash(cd /Users/mac/Documents/GymOps echo \"=== TOTAL FILES ===\" find _bmad .claude -type f)"
+      "Bash(cd /Users/mac/Documents/GymOps echo \"=== TOTAL FILES ===\" find _bmad .claude -type f)",
+      "Bash(grep -r zonepay /Users/mac/Documents/GymOps/_bmad --include=*.md --include=*.yaml --include=*.yml --include=*.xml)",
+      "Bash(grep -r zone. /Users/mac/Documents/GymOps/_bmad --include=*.md --include=*.yaml --include=*.yml)",
+      "Bash(grep -r zone- /Users/mac/Documents/GymOps/_bmad --include=*.md --include=*.yaml --include=*.yml)",
+      "Bash(find /Users/mac/Documents/GymOps/.claude/commands -type f -name \"*.md\" -exec grep -l \"{project-root}\" {})",
+      "Bash(grep -h \"{project-root}\" /Users/mac/Documents/GymOps/.claude/commands/*.md)",
+      "Bash(grep -r zone. /Users/mac/Documents/GymOps/.claude/skills --include=*.md --include=*.yaml)",
+      "Bash(ls -d /Users/mac/Documents/GymOps/_bmad/bmm/workflows/4-implementation/*/)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(ls -d /Users/mac/Documents/GymOps/.claude/skills/*/)",
+      "Bash(grep -r \"submodule-skill-map\\\\|zone_dev.py\\\\|zone_sprint.py\\\\|zone_qa.py\" /Users/mac/Documents/GymOps/.claude/skills --include=*.md)",
+      "Bash(grep -n \"Bitbucket\\\\|Confluence\\\\|Jira\\\\|Azure DevOps\" /Users/mac/Documents/GymOps/.claude/skills/zone-*/SKILL.md)",
+      "Bash(wc -l /Users/mac/Documents/GymOps/_bmad/bmm/workflows/*/*.md /Users/mac/Documents/GymOps/_bmad/bmm/workflows/*/*/*.md)"
     ]
   }
 }

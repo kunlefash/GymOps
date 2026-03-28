@@ -15,7 +15,7 @@ test.afterAll(async () => { await closeAllDBs(); });
 
 // SSH
 import { runCommandByServerName } from '../../../fixtures/sshClient.js';
-const result = await runCommandByServerName('zonepay', 'ls -la /home/qaadmin');
+const result = await runCommandByServerName('gymops', 'ls -la /home/qaadmin');
 ```
 
 ## zone.clientdashboard-automation — JSON Files

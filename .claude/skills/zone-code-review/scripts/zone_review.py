@@ -24,7 +24,7 @@ import yaml
 # ---------------------------------------------------------------------------
 
 SENTINEL = "###ZONE-REVIEW-RESULT###"
-MODULE_REF_RE = re.compile(r"modules/([\w.]+)")
+SRC_REF_RE = re.compile(r"modules/([\w.]+)")
 UNCHECKED_RE = re.compile(r"- \[ \]")
 
 # ---------------------------------------------------------------------------
@@ -34,15 +34,10 @@ UNCHECKED_RE = re.compile(r"- \[ \]")
 # API tests across the platform.  It is never referenced directly in story
 # task lists (which name source modules), so it must be injected automatically
 # whenever a story touches any testable source module.
-E2E_TEST_REPO = "zoneqa_automation"
+E2E_TEST_REPO = "tests/e2e"
 E2E_TRIGGER_MODULES = {
-    "zone.zonepay", "zone.pggateway", "zone.zonepaypwa",
-    "zone.cardlesstransactionprocessing", "zonepay.settlement",
-    "zone.zonepay.notifications", "zone.framework", "zone.framework.v3",
-    "zone.clientdashboard", "zone.zonepay.qrrouter",
-    "zone.admin.api", "zone.orchestrator",
-    "zone.sui.sdk", "zone.sui.indexer", "zone.settlement.sui",
-    "zonedc.settlement", "zone.smartcontracts.sui",
+    "src/app", "src/components", "src/lib",
+    "src/services", "src/hooks", "src/stores",
 }
 # Matches "**Issues Found:** [X Critical,] Y High, Z Medium, W Low"
 # or      "**Issues Found:** CRITICAL=X, HIGH=Y, MEDIUM=Z, LOW=W"
@@ -57,26 +52,26 @@ ISSUES_FOUND_RE = re.compile(
 )
 # Indicates review report was written to story
 REVIEW_REPORT_MARKER = "**Issues Found:**"
-SKILL_MAP_FILENAME = "submodule-skill-map.yaml"
+SKILL_MAP_FILENAME = "module-skill-map.yaml"
 
 
-def _resolve_story_file(jira_key: str, repo_root: Path) -> Path:
-    """Resolve a Jira key to its story file path via jira-key-map.yaml."""
-    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "jira-key-map.yaml"
+def _resolve_story_file(story_key: str, repo_root: Path) -> Path:
+    """Resolve a story key to its story file path via story-key-map.yaml."""
+    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "story-key-map.yaml"
     data = read_yaml(map_path)
     active_project_key = data.get("active_project_key")
     if not active_project_key:
-        die("active_project_key not found in jira-key-map.yaml")
+        die("active_project_key not found in story-key-map.yaml")
     items = data.get("projects", {}).get(active_project_key, {}).get("items", [])
     bmad_id = None
     bmad_title = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
             bmad_id = str(item["bmad_id"])
             bmad_title = str(item["bmad_title"])
             break
     if bmad_id is None:
-        die(f"Jira key '{jira_key}' not found as story in jira-key-map.yaml")
+        die(f"story key '{story_key}' not found as story in story-key-map.yaml")
     story_key = bmad_id.replace(".", "-") + "-" + slugify(bmad_title)
     return repo_root / "_bmad-output" / "implementation-artifacts" / "stories" / f"{story_key}.md"
 
@@ -178,8 +173,8 @@ def die(message: str, code: int = 1) -> None:
 # Domain skill resolution
 # ---------------------------------------------------------------------------
 
-def resolve_domain_skills(submodule_names: List[str], repo_root: Path) -> List[Dict[str, Any]]:
-    """Map submodule names to domain skills via submodule-skill-map.yaml.
+def resolve_domain_skills(module_names: List[str], repo_root: Path) -> List[Dict[str, Any]]:
+    """Map module names to domain skills via module-skill-map.yaml.
 
     Returns a deduplicated list of dicts: {skill, path, exists}.
     Gracefully returns [] with a stderr warning if the map file is missing.
@@ -200,7 +195,7 @@ def resolve_domain_skills(submodule_names: List[str], repo_root: Path) -> List[D
     result: List[Dict[str, Any]] = []
     skills_base = repo_root / ".claude" / "skills"
 
-    for name in submodule_names:
+    for name in module_names:
         for skill in mappings.get(name, []):
             if skill in seen:
                 continue
@@ -245,14 +240,14 @@ def cmd_sync_superrepo(args: argparse.Namespace) -> int:
 
 def cmd_resolve(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key
+    story_key = args.story_key
 
-    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "jira-key-map.yaml"
+    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "story-key-map.yaml"
     data = read_yaml(map_path)
 
     active_project_key = data.get("active_project_key")
     if not active_project_key:
-        die("active_project_key not found in jira-key-map.yaml")
+        die("active_project_key not found in story-key-map.yaml")
 
     projects = data.get("projects", {})
     project = projects.get(active_project_key, {})
@@ -261,34 +256,34 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     bmad_id = None
     bmad_title = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
             bmad_id = str(item["bmad_id"])
             bmad_title = str(item["bmad_title"])
             break
 
     if bmad_id is None:
-        die(f"Jira key '{jira_key}' not found in jira-key-map.yaml (project={active_project_key})")
+        die(f"story key '{story_key}' not found in story-key-map.yaml (project={active_project_key})")
 
     # Look up the parent epic for epic branch resolution
-    parent_jira_key = None
+    parent_story_key = None
     epic_key = None
     epic_branch = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
-            parent_jira_key = item.get("parent_jira_key")
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
+            parent_story_key = item.get("parent_story_key")
             break
 
-    if parent_jira_key:
+    if parent_story_key:
         for item in items:
-            if item.get("bmad_type") == "epic" and item.get("jira_key") == parent_jira_key:
+            if item.get("bmad_type") == "epic" and item.get("story_key") == parent_story_key:
                 epic_bmad_id = str(item["bmad_id"]).replace(".", "-")
                 epic_key = epic_bmad_id + "-" + slugify(str(item["bmad_title"]))
-                epic_branch = f"agent/epic/{parent_jira_key}-{epic_key}"
+                epic_branch = f"agent/epic/{parent_story_key}-{epic_key}"
                 break
 
     # Derive story_key: dots→dashes in bmad_id + '-' + slugify(title)
     story_key = bmad_id.replace(".", "-") + "-" + slugify(bmad_title)
-    story_branch = f"agent/story/{jira_key}-{story_key}"
+    story_branch = f"agent/story/{story_key}-{story_key}"
 
     story_file_path = (
         repo_root
@@ -311,12 +306,12 @@ def cmd_resolve(args: argparse.Namespace) -> int:
         "story_key": story_key,
         "story_branch": story_branch,
         "story_file_path": str(story_file_path),
-        "jira_key": jira_key,
+        "story_key": story_key,
     }
     if epic_branch:
         result_data["epic_branch"] = epic_branch
         result_data["epic_key"] = epic_key
-        result_data["parent_jira_key"] = parent_jira_key
+        result_data["parent_story_key"] = parent_story_key
 
     emit_json(result_data)
     return 0
@@ -329,8 +324,8 @@ PREWARM_MAX_WORKERS = int(os.environ.get("PREWARM_WORKERS", "4"))
 # prepare-branches (Phase 2)
 # ---------------------------------------------------------------------------
 
-def _prepare_one_submodule(name, repo_root, story_branch, checkout_only=False, target_branches=None):
-    """Prepare a single submodule: shallow init, targeted fetch, checkout.
+def _prepare_one_module(name, repo_root, story_branch, checkout_only=False, target_branches=None):
+    """Prepare a single module: shallow init, targeted fetch, checkout.
 
     Returns a dict with path, status, created keys.
     """
@@ -338,16 +333,16 @@ def _prepare_one_submodule(name, repo_root, story_branch, checkout_only=False, t
     entry: Dict[str, Any] = {"path": f"modules/{name}", "status": "ok", "created": False}
 
     try:
-        # Initialize submodule with shallow clone
-        git(["submodule", "update", "--init", "--depth", "1", f"modules/{name}"], cwd=str(repo_root))
+        # Initialize module with shallow clone
+        git(["module", "update", "--init", "--depth", "1", f"modules/{name}"], cwd=str(repo_root))
     except subprocess.CalledProcessError as exc:
         entry["status"] = "error"
-        entry["error"] = f"submodule init failed: {exc.stderr.strip()}"
+        entry["error"] = f"module init failed: {exc.stderr.strip()}"
         return entry
 
     sub_dir = str(sub_path)
-    git(["config", "user.name", "Zone AI Agent"], cwd=sub_dir)
-    git(["config", "user.email", "ai@zonenetwork.com"], cwd=sub_dir)
+    git(["config", "user.name", "GymOps AI Agent"], cwd=sub_dir)
+    git(["config", "user.email", "ai@gymops.dev"], cwd=sub_dir)
 
     try:
         # Targeted fetch for specific branches
@@ -414,28 +409,28 @@ def cmd_prepare_branches(args: argparse.Namespace) -> int:
     content = story_file.read_text(encoding="utf-8")
 
     # Extract modules/<name> references, deduplicate, filter to existing dirs
-    matches = MODULE_REF_RE.findall(content)
+    matches = SRC_REF_RE.findall(content)
     seen = set()
-    submodule_names = []
+    module_names = []
     for m in matches:
         if m not in seen:
             seen.add(m)
-            submodule_names.append(m)
+            module_names.append(m)
 
     # Auto-include zoneqa_automation when any testable source module is present.
     # This repo is never cited directly in story task lists (which name source
     # modules), so it must be injected here to ensure E2E/API tests are checked
-    # out and reviewed alongside unit/integration tests in source submodules.
+    # out and reviewed alongside unit/integration tests in source modules.
     if E2E_TEST_REPO not in seen and seen & E2E_TRIGGER_MODULES:
         seen.add(E2E_TEST_REPO)
-        submodule_names.append(E2E_TEST_REPO)
+        module_names.append(E2E_TEST_REPO)
 
-    valid_names = [n for n in submodule_names if (repo_root / "modules" / n).is_dir()]
+    valid_names = [n for n in module_names if (repo_root / "modules" / n).is_dir()]
     results: List[Dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=PREWARM_MAX_WORKERS) as pool:
         futures = {
             pool.submit(
-                _prepare_one_submodule, name, repo_root,
+                _prepare_one_module, name, repo_root,
                 story_branch, checkout_only, [story_branch],
             ): name
             for name in valid_names
@@ -443,7 +438,7 @@ def cmd_prepare_branches(args: argparse.Namespace) -> int:
         for future in as_completed(futures):
             results.append(future.result())
 
-    # Resolve domain skills from successfully checked-out submodules (exclude error and skipped)
+    # Resolve domain skills from successfully checked-out modules (exclude error and skipped)
     prepared_names = [
         Path(r["path"]).name for r in results
         if r["status"] not in ("error", "skipped")
@@ -456,7 +451,7 @@ def cmd_prepare_branches(args: argparse.Namespace) -> int:
             entry["role"] = "e2e_test_repo"
 
     emit_json({
-        "submodules": results,
+        "modules": results,
         "count": len(results),
         "domain_skills": domain_skills,
     })
@@ -473,24 +468,24 @@ def cmd_prewarm(args: argparse.Namespace) -> int:
     Returns exit code:
       0 = success
       1 = resolve failed (story not found)
-      2 = no submodules prepared
+      2 = no modules prepared
     """
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key
+    story_key = args.story_key
 
     # --- Phase 0: sync super-repo ---
     sync_ns = argparse.Namespace(repo_root=str(repo_root))
     cmd_sync_superrepo(sync_ns)
 
     # --- Phase 1: resolve ---
-    resolve_ns = argparse.Namespace(jira_key=jira_key, repo_root=str(repo_root))
+    resolve_ns = argparse.Namespace(story_key=story_key, repo_root=str(repo_root))
     # Inline resolve logic to capture result data
-    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "jira-key-map.yaml"
+    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "story-key-map.yaml"
     data = read_yaml(map_path)
 
     active_project_key = data.get("active_project_key")
     if not active_project_key:
-        die("active_project_key not found in jira-key-map.yaml")
+        die("active_project_key not found in story-key-map.yaml")
 
     projects = data.get("projects", {})
     project = projects.get(active_project_key, {})
@@ -499,17 +494,17 @@ def cmd_prewarm(args: argparse.Namespace) -> int:
     bmad_id = None
     bmad_title = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
             bmad_id = str(item["bmad_id"])
             bmad_title = str(item["bmad_title"])
             break
 
     if bmad_id is None:
-        emit_json({"error": f"Jira key '{jira_key}' not found", "phase": "resolve"})
+        emit_json({"error": f"story key '{story_key}' not found", "phase": "resolve"})
         return 1
 
     story_key = bmad_id.replace(".", "-") + "-" + slugify(bmad_title)
-    story_branch = f"agent/story/{jira_key}-{story_key}"
+    story_branch = f"agent/story/{story_key}-{story_key}"
 
     story_file_path = (
         repo_root
@@ -525,56 +520,56 @@ def cmd_prewarm(args: argparse.Namespace) -> int:
 
     # --- Phase 2: prepare-branches with checkout_only=True ---
     content = story_file_path.read_text(encoding="utf-8")
-    matches = MODULE_REF_RE.findall(content)
+    matches = SRC_REF_RE.findall(content)
     seen: set = set()
-    submodule_names: List[str] = []
+    module_names: List[str] = []
     for m in matches:
         if m not in seen:
             seen.add(m)
-            submodule_names.append(m)
+            module_names.append(m)
 
     # Auto-include zoneqa_automation when any testable source module is present.
     # This repo is never cited directly in story task lists (which name source
     # modules), so it must be injected here to ensure E2E/API tests are checked
-    # out and reviewed alongside unit/integration tests in source submodules.
+    # out and reviewed alongside unit/integration tests in source modules.
     if E2E_TEST_REPO not in seen and seen & E2E_TRIGGER_MODULES:
         seen.add(E2E_TEST_REPO)
-        submodule_names.append(E2E_TEST_REPO)
+        module_names.append(E2E_TEST_REPO)
 
-    valid_names = [n for n in submodule_names if (repo_root / "modules" / n).is_dir()]
-    submodule_results: List[Dict[str, Any]] = []
+    valid_names = [n for n in module_names if (repo_root / "modules" / n).is_dir()]
+    module_results: List[Dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=PREWARM_MAX_WORKERS) as pool:
         futures = {
             pool.submit(
-                _prepare_one_submodule, name, repo_root,
+                _prepare_one_module, name, repo_root,
                 story_branch, True, [story_branch],  # checkout_only=True
             ): name
             for name in valid_names
         }
         for future in as_completed(futures):
-            submodule_results.append(future.result())
+            module_results.append(future.result())
 
-    # Deeper fetch: --deepen 50 for diff context on checked-out submodules
-    for result in submodule_results:
+    # Deeper fetch: --deepen 50 for diff context on checked-out modules
+    for result in module_results:
         if result["status"] not in ("error", "skipped"):
             sub_dir = str(repo_root / result["path"])
             git(["fetch", "origin", "--deepen", "50"], cwd=sub_dir, check=False)
 
     prepared_names = [
-        Path(r["path"]).name for r in submodule_results
+        Path(r["path"]).name for r in module_results
         if r["status"] not in ("error", "skipped")
     ]
 
     # Tag the e2e test repo entry so Phase 3 can identify it for convention-aware review
-    for entry in submodule_results:
+    for entry in module_results:
         if Path(entry["path"]).name == E2E_TEST_REPO:
             entry["role"] = "e2e_test_repo"
 
     if not prepared_names:
         emit_json({
-            "error": "No submodules prepared",
+            "error": "No modules prepared",
             "phase": "prepare-branches",
-            "submodules": submodule_results,
+            "modules": module_results,
         })
         return 2
 
@@ -592,23 +587,23 @@ def cmd_prewarm(args: argparse.Namespace) -> int:
             except Exception:
                 pass
 
-    # Write .zone-prewarm-context.json
+    # Write .gymops-prewarm-context.json
     context_data = {
-        "jira_key": jira_key,
+        "story_key": story_key,
         "bmad_id": bmad_id,
         "bmad_title": bmad_title,
         "story_key": story_key,
         "story_branch": story_branch,
         "story_file_path": str(story_file_path),
-        "submodules": submodule_results,
+        "modules": module_results,
         "domain_skills": domain_skills,
         "prepared_count": len(prepared_names),
     }
-    context_path = repo_root / ".zone-prewarm-context.json"
+    context_path = repo_root / ".gymops-prewarm-context.json"
     context_path.write_text(json.dumps(context_data, indent=2), encoding="utf-8")
 
-    # Write .zone-prewarm-skills.md
-    skills_path = repo_root / ".zone-prewarm-skills.md"
+    # Write .gymops-prewarm-skills.md
+    skills_path = repo_root / ".gymops-prewarm-skills.md"
     skills_md = "\n\n---\n\n".join(skills_content_parts) if skills_content_parts else "# No domain skills loaded\n"
     skills_path.write_text(skills_md, encoding="utf-8")
 
@@ -622,11 +617,11 @@ def cmd_prewarm(args: argparse.Namespace) -> int:
 
 def cmd_commit_superrepo(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key
+    story_key = args.story_key
     title = args.title
     cwd = str(repo_root)
 
-    commit_msg = f"{jira_key}: {title} - code review report"
+    commit_msg = f"{story_key}: {title} - code review report"
 
     # Stage _bmad-output/
     git(["add", "_bmad-output/"], cwd=cwd, check=False)
@@ -681,14 +676,14 @@ def cmd_commit_superrepo(args: argparse.Namespace) -> int:
 # create-pullrequests (Phase 4.5)
 # ---------------------------------------------------------------------------
 
-REMOTE_URL_RE = re.compile(r"git@bitbucket\.org:([^/]+)/(.+?)(?:\.git)?$")
+REMOTE_URL_RE = re.compile(r"git@github\.org:([^/]+)/(.+?)(?:\.git)?$")
 
 
-def get_default_branch(submodule_name: str, repo_root: Path) -> str:
-    """Get the default branch for a submodule from .gitmodules, fallback to 'development'."""
+def get_default_branch(module_name: str, repo_root: Path) -> str:
+    """Get the default branch for a module from .gitmodules, fallback to 'development'."""
     try:
         result = git(
-            ["config", "-f", ".gitmodules", "--get", f"submodule.modules/{submodule_name}.branch"],
+            ["config", "-f", ".gitmodules", "--get", f"module.modules/{module_name}.branch"],
             cwd=str(repo_root),
             check=False,
         )
@@ -701,7 +696,7 @@ def get_default_branch(submodule_name: str, repo_root: Path) -> str:
 
 
 def _parse_bb_remote(sub_dir: str) -> Optional[tuple]:
-    """Extract (workspace, repo_slug) from the submodule's origin remote URL."""
+    """Extract (workspace, repo_slug) from the module's origin remote URL."""
     result = git(["remote", "get-url", "origin"], cwd=sub_dir, check=False)
     if result.returncode != 0:
         return None
@@ -712,7 +707,7 @@ def _parse_bb_remote(sub_dir: str) -> Optional[tuple]:
 
 
 def _resolve_bb_auth() -> Optional[str]:
-    """Resolve Bitbucket auth header. Prefers API token; falls back to app password."""
+    """Resolve GitHub auth header. Prefers API token; falls back to app password."""
     # Prefer new API token auth
     bb_email = os.environ.get("BB_EMAIL", "")
     bb_token = os.environ.get("BB_API_TOKEN", "")
@@ -731,17 +726,17 @@ def _resolve_bb_auth() -> Optional[str]:
 
 def _build_pr_description(
     story_file: Optional[str],
-    jira_key: str,
+    story_key: str,
     story_branch: str,
     epic_branch: str,
 ) -> str:
     """Build a Markdown PR description from the story file content.
 
     Falls back to a minimal description if the story file is missing or unreadable.
-    Truncates to 64 KB to stay within Bitbucket API limits.
+    Truncates to 64 KB to stay within GitHub API limits.
     """
     BB_DESC_LIMIT = 64 * 1024  # 64 KB
-    fallback = f"{jira_key}: `{story_branch}` → `{epic_branch}`"
+    fallback = f"{story_key}: `{story_branch}` → `{epic_branch}`"
 
     if not story_file:
         return fallback
@@ -777,7 +772,7 @@ def _build_pr_description(
     ac_text = _extract_section(content, r"Acceptance Criteria")
     tasks_text = _extract_section(content, r"Tasks\s*/?\s*Subtasks")
 
-    parts: List[str] = [f"## {jira_key}"]
+    parts: List[str] = [f"## {story_key}"]
 
     if story_text:
         parts.append(f"### Story\n{story_text}")
@@ -808,8 +803,8 @@ def _bb_create_pr(
     auth_header: str,
     description: str = "",
 ) -> Dict[str, Any]:
-    """Create a Bitbucket PR via REST API. Returns dict with status info."""
-    url = f"https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/pullrequests"
+    """Create a GitHub PR via REST API. Returns dict with status info."""
+    url = f"https://api.github.org/2.0/repositories/{workspace}/{repo_slug}/pullrequests"
     payload = json.dumps({
         "title": title,
         "description": description,
@@ -845,29 +840,29 @@ def _bb_create_pr(
 
 
 def cmd_create_pullrequests(args: argparse.Namespace) -> int:
-    """Phase 4.5: Create Bitbucket PRs from story_branch → epic_branch.
+    """Phase 4.5: Create GitHub PRs from story_branch → epic_branch.
 
     When epic_branch is empty (bug fixes with no parent epic), the target
-    branch is resolved per-submodule from .gitmodules (default: 'development').
+    branch is resolved per-module from .gitmodules (default: 'development').
     """
     repo_root = Path(args.repo_root).resolve()
     story_branch = args.story_branch
     epic_branch = args.epic_branch
-    jira_key = args.jira_key
+    story_key = args.story_key
     title = args.title
     use_default = not epic_branch
 
     auth_header = _resolve_bb_auth()
 
     if auth_header is None:
-        print("warning: Bitbucket credentials not configured (set BB_EMAIL + BB_API_TOKEN, or legacy BB_USERNAME + BB_APP_PASSWORD); skipping PR creation", file=sys.stderr)
+        print("warning: GitHub credentials not configured (set BB_EMAIL + BB_API_TOKEN, or legacy BB_USERNAME + BB_APP_PASSWORD); skipping PR creation", file=sys.stderr)
         try:
-            submodules = json.loads(args.submodules)
+            modules = json.loads(args.modules)
         except (json.JSONDecodeError, TypeError):
-            submodules = []
+            modules = []
         results = [
-            {"submodule": s.get("path", "unknown"), "status": "skipped", "reason": "missing BB credentials"}
-            for s in submodules
+            {"module": s.get("path", "unknown"), "status": "skipped", "reason": "missing BB credentials"}
+            for s in modules
             if s.get("status") in ("checked_out_remote", "checked_out_local")
         ]
         emit_json({
@@ -879,26 +874,26 @@ def cmd_create_pullrequests(args: argparse.Namespace) -> int:
         })
         return 0
 
-    pr_title = f"{jira_key}: {title}"
+    pr_title = f"{story_key}: {title}"
     story_file = getattr(args, "story_file", None)
 
     try:
-        submodules = json.loads(args.submodules)
+        modules = json.loads(args.modules)
     except (json.JSONDecodeError, TypeError):
-        die("--submodules must be a valid JSON array")
+        die("--modules must be a valid JSON array")
 
     qualifying = [
-        s for s in submodules
+        s for s in modules
         if s.get("status") in ("checked_out_remote", "checked_out_local")
     ]
 
-    # Build PR description once; use first submodule's resolved target for fallback text
+    # Build PR description once; use first module's resolved target for fallback text
     if use_default and qualifying:
         first_sub_name = qualifying[0].get("path", "").split("/")[-1] if "/" in qualifying[0].get("path", "") else qualifying[0].get("path", "")
         desc_target = get_default_branch(first_sub_name, repo_root)
     else:
         desc_target = epic_branch
-    pr_description = _build_pr_description(story_file, jira_key, story_branch, desc_target)
+    pr_description = _build_pr_description(story_file, story_key, story_branch, desc_target)
 
     results = []
     created = 0
@@ -908,9 +903,9 @@ def cmd_create_pullrequests(args: argparse.Namespace) -> int:
     for sub in qualifying:
         sub_path = sub.get("path", "")
         sub_dir = str(repo_root / sub_path)
-        entry: Dict[str, Any] = {"submodule": sub_path}
+        entry: Dict[str, Any] = {"module": sub_path}
 
-        # Resolve target branch per-submodule when no epic branch
+        # Resolve target branch per-module when no epic branch
         if use_default:
             sub_name = sub_path.split("/")[-1] if "/" in sub_path else sub_path
             target_branch = get_default_branch(sub_name, repo_root)
@@ -920,7 +915,7 @@ def cmd_create_pullrequests(args: argparse.Namespace) -> int:
         remote_info = _parse_bb_remote(sub_dir)
         if not remote_info:
             entry["status"] = "skipped"
-            entry["reason"] = "could not parse Bitbucket remote URL"
+            entry["reason"] = "could not parse GitHub remote URL"
             skipped += 1
             results.append(entry)
             continue
@@ -956,8 +951,8 @@ def cmd_create_pullrequests(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_attach_story(args: argparse.Namespace) -> int:
-    """Phase 4.6: Attach story file to Jira issue (best-effort)."""
-    jira_key = args.jira_key
+    """Phase 4.6: Attach story file to story (best-effort)."""
+    story_key = args.story_key
     story_file = Path(args.story_file)
     repo_root = Path(args.repo_root).resolve()
 
@@ -966,7 +961,7 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
         emit_json({
             "action": "skipped",
             "reason": "story file not found",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
         return 0
 
@@ -977,7 +972,7 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
         emit_json({
             "action": "skipped",
             "reason": "jira_agile.py not found",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
         return 0
 
@@ -986,7 +981,7 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
 
     cmd = [
         sys.executable, str(jira_script),
-        "attach-file", jira_key, str(story_file),
+        "attach-file", story_key, str(story_file),
         "--filename", attachment_filename,
     ]
 
@@ -1008,13 +1003,13 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
             emit_json({
                 "action": "warning",
                 "reason": f"attachment failed: {result.stderr.strip() or result.stdout.strip()}",
-                "jira_key": jira_key,
+                "story_key": story_key,
             })
             return 0  # Non-fatal
 
         emit_json({
             "action": "attached",
-            "jira_key": jira_key,
+            "story_key": story_key,
             "file": str(story_file),
             "attachment_filename": attachment_filename,
         })
@@ -1024,14 +1019,14 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
         emit_json({
             "action": "warning",
             "reason": "attachment timed out",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
     except Exception as exc:
         print(f"warning: Jira attachment error: {exc}", file=sys.stderr)
         emit_json({
             "action": "warning",
             "reason": str(exc),
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
 
     return 0  # Always non-fatal
@@ -1042,8 +1037,8 @@ def cmd_attach_story(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_transition_jira(args: argparse.Namespace) -> int:
-    """Phase 4.8: Transition Jira issue to target status (best-effort)."""
-    jira_key = args.jira_key
+    """Phase 4.8: Transition story to target status (best-effort)."""
+    story_key = args.story_key
     target_status = args.target_status
     comment = args.comment
     comment_file = args.comment_file
@@ -1058,13 +1053,13 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
         emit_json({
             "action": "skipped",
             "reason": "jira_agile.py not found",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
         return 0
 
     cmd = [
         sys.executable, str(jira_script),
-        "transition-issue", jira_key, target_status,
+        "transition-issue", story_key, target_status,
     ]
     if comment:
         cmd.extend(["--comment", comment])
@@ -1093,13 +1088,13 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
             emit_json({
                 "action": "warning",
                 "reason": f"transition failed: {result.stderr.strip() or result.stdout.strip()}",
-                "jira_key": jira_key,
+                "story_key": story_key,
             })
             return 0  # Non-fatal
 
         emit_json({
             "action": "transitioned",
-            "jira_key": jira_key,
+            "story_key": story_key,
             "target_status": target_status,
         })
 
@@ -1108,14 +1103,14 @@ def cmd_transition_jira(args: argparse.Namespace) -> int:
         emit_json({
             "action": "warning",
             "reason": "transition timed out",
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
     except Exception as exc:
         print(f"warning: Jira transition error: {exc}", file=sys.stderr)
         emit_json({
             "action": "warning",
             "reason": str(exc),
-            "jira_key": jira_key,
+            "story_key": story_key,
         })
 
     return 0  # Always non-fatal
@@ -1136,7 +1131,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     if story_file_arg:
         story_file = Path(story_file_arg)
     else:
-        story_file = _resolve_story_file(args.jira_key, Path(args.repo_root).resolve())
+        story_file = _resolve_story_file(args.story_key, Path(args.repo_root).resolve())
 
     if not story_file.exists():
         die(f"Story file not found: {story_file}")
@@ -1185,12 +1180,12 @@ def main() -> int:
     p_sync.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # resolve
-    p_resolve = subparsers.add_parser("resolve", help="Phase 1: Resolve Jira key to story")
-    p_resolve.add_argument("--jira-key", required=True, help="Jira issue key (e.g. BMAD-152)")
+    p_resolve = subparsers.add_parser("resolve", help="Phase 1: Resolve story key to story")
+    p_resolve.add_argument("--story-key", required=True, help="story key (e.g. BMAD-152)")
     p_resolve.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # prepare-branches
-    p_branches = subparsers.add_parser("prepare-branches", help="Phase 2: Checkout submodule story branches")
+    p_branches = subparsers.add_parser("prepare-branches", help="Phase 2: Checkout module story branches")
     p_branches.add_argument("--story-file", required=True, help="Path to story markdown file")
     p_branches.add_argument("--story-branch", required=True, help="Branch name for the story")
     p_branches.add_argument("--checkout-only", action="store_true", help="Only checkout existing branches; never create")
@@ -1198,35 +1193,35 @@ def main() -> int:
 
     # prewarm
     p_prewarm = subparsers.add_parser("prewarm", help="Phases 0-2.5: Sync, resolve, prepare, load skills")
-    p_prewarm.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_prewarm.add_argument("--story-key", required=True, help="story key")
     p_prewarm.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # commit-superrepo
     p_commit_super = subparsers.add_parser("commit-superrepo", help="Phase 4: Commit and push super-repo")
     p_commit_super.add_argument("--story-key", required=True, help="Story key identifier")
-    p_commit_super.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_commit_super.add_argument("--story-key", required=True, help="story key")
     p_commit_super.add_argument("--title", required=True, help="BMAD story title for commit message")
     p_commit_super.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # create-pullrequests
-    p_pr = subparsers.add_parser("create-pullrequests", help="Phase 4.5: Create Bitbucket PRs")
+    p_pr = subparsers.add_parser("create-pullrequests", help="Phase 4.5: Create GitHub PRs")
     p_pr.add_argument("--story-branch", required=True, help="Source branch for PRs")
-    p_pr.add_argument("--epic-branch", default="", help="Destination branch for PRs (empty = submodule default)")
-    p_pr.add_argument("--jira-key", required=True, help="Jira issue key for PR title")
+    p_pr.add_argument("--epic-branch", default="", help="Destination branch for PRs (empty = module default)")
+    p_pr.add_argument("--story-key", required=True, help="story key for PR title")
     p_pr.add_argument("--title", required=True, help="BMAD title for PR title")
-    p_pr.add_argument("--submodules", required=True, help="JSON string of submodule result objects")
+    p_pr.add_argument("--modules", required=True, help="JSON string of module result objects")
     p_pr.add_argument("--story-file", default=None, help="Path to story markdown file (used to build PR description)")
     p_pr.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # attach-story
     p_attach = subparsers.add_parser("attach-story", help="Phase 4.6: Attach story file to Jira")
-    p_attach.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_attach.add_argument("--story-key", required=True, help="story key")
     p_attach.add_argument("--story-file", required=True, help="Path to story markdown file")
     p_attach.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # transition-jira
-    p_transition = subparsers.add_parser("transition-jira", help="Phase 4.8: Transition Jira issue")
-    p_transition.add_argument("--jira-key", required=True, help="Jira issue key")
+    p_transition = subparsers.add_parser("transition-jira", help="Phase 4.8: Transition story")
+    p_transition.add_argument("--story-key", required=True, help="story key")
     p_transition.add_argument("--target-status", required=True, help="Target Jira status")
     group = p_transition.add_mutually_exclusive_group()
     group.add_argument("--comment", default=None, help="Optional transition comment")
@@ -1239,7 +1234,7 @@ def main() -> int:
     # status
     p_status = subparsers.add_parser("status", help="Phase 5: Output status sentinel")
     p_status.add_argument("--story-file", default=None, help="Path to story markdown file")
-    p_status.add_argument("--jira-key", default=None, help="Jira issue key (fallback resolution when --story-file omitted)")
+    p_status.add_argument("--story-key", default=None, help="story key (fallback resolution when --story-file omitted)")
     p_status.add_argument("--repo-root", default=".", help="Repository root directory")
 
     parsed = parser.parse_args()

@@ -1,10 +1,10 @@
 ---
 name: zone-qa-automation
-description: End-to-end test automation standards for Zone payment platform. Covers
-  the zoneqa_automation Playwright framework — BasePage POM, token-cached API testing,
+description: End-to-end test automation standards for GymOps platform. Covers
+  the tests/e2e Playwright framework — BasePage POM, token-cached API testing,
   multi-institution data-driven patterns, Testiny reporting, and MS Teams CI notification.
-  Use when writing or modifying Playwright E2E or API tests in zoneqa_automation.
-  zone.clientdashboard-automation is DEPRECATED — all tests are harmonized here.
+  Use when writing or modifying Playwright E2E or API tests in tests/e2e.
+  src/components-automation is DEPRECATED — all tests are harmonized here.
 version: 2.0.0
 triggers:
   keywords:
@@ -15,7 +15,7 @@ triggers:
     - testiny
     - basepage
   files:
-    - modules/zoneqa_automation/**
+    - modules/tests/e2e/**
     - modules/**/playwright.config.*
   intents:
     - add_e2e_test
@@ -27,8 +27,8 @@ triggers:
 
 # Zone QA Automation — E2E Testing Skill
 
-> Standards for `zoneqa_automation` — the single canonical Playwright framework for all
-> Zone E2E and API tests. `zone.clientdashboard-automation` is deprecated; do not create
+> Standards for `tests/e2e` — the single canonical Playwright framework for all
+> Zone E2E and API tests. `src/components-automation` is deprecated; do not create
 > or modify files there.
 
 ---
@@ -37,7 +37,7 @@ triggers:
 
 | Aspect | Value |
 |---|---|
-| **Scope** | All ZonePay / Cardless PWA, API, and infrastructure tests |
+| **Scope** | All GymOps / Cardless PWA, API, and infrastructure tests |
 | **Playwright** | v1.49.1 |
 | **Module system** | ES Modules (`.mjs` config) |
 | **POM pattern** | BasePage inheritance |
@@ -61,7 +61,7 @@ triggers:
 | **MSSQL (tedious)** | Database fixture queries |
 | **ssh2** | Remote server command execution |
 | **ESLint v9** | Code quality |
-| **Bitbucket Pipelines** | CI/CD |
+| **GitHub Actionss** | CI/CD |
 
 ---
 
@@ -189,7 +189,7 @@ for (const institution of institutions) {
     const payload = apiPayloadManager.generateDynamicQR(200);
 
     const response = await request.post(
-      `${URLS.ADMINS}/zonepay/api/v1/PaymentLinks/generate`,
+      `${URLS.ADMINS}/gymops/api/v1/PaymentLinks/generate`,
       { data: payload, headers }
     );
     expect(response.status()).toBe(200);
@@ -223,7 +223,7 @@ console.log('🔵 Navigating to PWA');      // Info/step
 
 ## CI/CD Integration
 
-For Bitbucket Pipelines configuration, test commands, worker/retry settings, and reporter setup, see [reference/ci-cd-config.md](reference/ci-cd-config.md).
+For GitHub Actionss configuration, test commands, worker/retry settings, and reporter setup, see [reference/ci-cd-config.md](reference/ci-cd-config.md).
 
 ---
 
@@ -280,7 +280,7 @@ The pilot suite provides a fast PR check against live infrastructure:
 | Hardcode test data | Use fixtures / Faker |
 | Missing `.first()` on locators | Add `.first()` to ambiguous queries |
 | Inconsistent emoji logging | Use ✅❌⚠️🔵 consistently |
-| Write E2E/API tests in source modules | Always write to `zoneqa_automation` |
+| Write E2E/API tests in source modules | Always write to `tests/e2e` |
 
 ---
 

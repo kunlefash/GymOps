@@ -1,6 +1,6 @@
 ---
 name: zone-docs-consolidation
-description: Consolidate completed BMAD initiative artifacts into durable, repo-ready documentation for the ZonePay super-repo. Use when an initiative, epic, story, migration, rollout, or cross-module change has been implemented and the resulting docs must be grounded in actual code, config, tests, infra, and repository conventions instead of planning artifacts alone.
+description: Consolidate completed BMAD initiative artifacts into durable, repo-ready documentation for the GymOps repo. Use when an initiative, epic, story, migration, rollout, or cross-module change has been implemented and the resulting docs must be grounded in actual code, config, tests, infra, and repository conventions instead of planning artifacts alone.
 version: 1.0.0
 triggers:
   keywords:
@@ -18,7 +18,7 @@ triggers:
 
 # Zone Documentation Consolidation
 
-Convert completed BMAD initiative artifacts into durable documentation that matches the actual ZonePay codebase, submodule layout, and existing doc patterns.
+Convert completed BMAD initiative artifacts into durable documentation that matches the actual GymOps codebase, module layout, and existing doc patterns.
 
 Use this after implementation or verification work is materially complete. This is not a planning skill and not a generic document-project scan.
 
@@ -47,9 +47,9 @@ If the user does not provide all of this, infer scope from the repo and proceed.
 Always do this before writing or editing documentation:
 
 1. Read root [AGENTS.md](../../AGENTS.md) and [CLAUDE.md](../../CLAUDE.md).
-2. Confirm repo shape from `.gitmodules` and `git submodule status`.
+2. Confirm repo shape from `.gitconfig` and `git module status`.
 3. Identify the affected module type:
-   - .NET service or library under `modules/zone.*` or `modules/zonepay.*`
+   - Next.js service or library under `src/*` or `modules/gymops.*`
    - frontend app
    - smart-contract repo
    - Helm or Liquibase infra repo
@@ -79,7 +79,7 @@ These are present in this repo today and should be treated as default behavior.
 
 ### Repo shape
 
-- This is a super-repo with many Git submodules under `modules/`.
+- This is a repo with many Git modules under `modules/`.
 - Root `docs/` is the main durable cross-module documentation area.
 - Per-module documentation also exists and is often the right place for implementation-specific details.
 - `_bmad/` contains workflow machinery.
@@ -100,13 +100,13 @@ These are present in this repo today and should be treated as default behavior.
 ### Module documentation patterns
 
 - Many modules have `README.md` at module root.
-- Several .NET modules have rich `AGENTS.md` files that require updates when architecture, patterns, structure, build, or testing conventions change.
+- Several Next.js modules have rich `AGENTS.md` files that require updates when architecture, patterns, structure, build, or testing conventions change.
 - Some modules keep local docs close to implementation:
-  - `modules/zone.pggateway/docs/`
-  - `modules/zone.zonepay/deploy/README.md`
-  - `modules/zone.smartcontracts.sui/*.md`
-  - `modules/zonedc.settlement/scripts/releases/*/release-note.md`
-  - `modules/zone.admin.api/doc/apispec.yaml`
+  - `src/pggateway/docs/`
+  - `src/gymops/deploy/README.md`
+  - `src/smartcontracts.sui/*.md`
+  - `modules//scripts/releases/*/release-note.md`
+  - `src/admin.api/doc/apispec.yaml`
 
 ### Naming and formatting
 
@@ -201,7 +201,7 @@ Use:
 ### Migration and infrastructure documentation
 
 - For Liquibase content, document changelog structure and operational implications near the migration repos, then update root architecture or deployment docs only if the change is cross-cutting.
-- For Helm and deployment packaging, keep service-specific details near `zone.helm`, `zonepay.helmtemplate`, or `zonepay.helmvalues`; reserve root deployment docs for platform-wide deployment shape.
+- For Helm and deployment packaging, keep service-specific details near `zone.helm`, `gymops.helmtemplate`, or `gymops.helmvalues`; reserve root deployment docs for platform-wide deployment shape.
 
 ### CI and automation
 
@@ -237,7 +237,7 @@ Never present BMAD intent as fact when the code disagrees.
 
 ## Handling Mismatches
 
-This repo already shows documentation drift in places, including differing submodule counts and generated summaries that can become stale. Future consolidation runs must account for that.
+This repo already shows documentation drift in places, including differing module counts and generated summaries that can become stale. Future consolidation runs must account for that.
 
 If you find a mismatch:
 
@@ -256,7 +256,7 @@ Example mismatch classes to watch for:
 ## Output Quality Standards
 
 - Write for future engineers, not for sprint retrospectives.
-- Keep docs specific to this repo and its submodules.
+- Keep docs specific to this repo and its modules.
 - Use exact paths, module names, and command locations that exist.
 - Prefer short, verifiable statements over broad architecture prose.
 - Preserve machine-readable structures when editing YAML registries or journey flow files.
@@ -267,7 +267,7 @@ Example mismatch classes to watch for:
 - Do not treat `_bmad-output/` as the final home for durable knowledge.
 - Do not move implementation detail into `repo-review/` when it belongs in `docs/` or the module repo.
 - Do not create a new root doc when an existing `docs/architecture/*`, `docs/domain/*`, `docs/api-contracts-*`, or module README already covers the area.
-- Do not update root docs without checking whether the authoritative detail belongs in a submodule instead.
+- Do not update root docs without checking whether the authoritative detail belongs in a module instead.
 - Do not restate BMAD plans that the code does not implement.
 - Do not copy hardcoded secrets or environment values from examples; convert them to placeholders.
 - Do not assume every referenced script exists. Verify it.

@@ -434,7 +434,7 @@ class JiraClient:
         self, issue_key: str, file_path: str, filename: Optional[str] = None
     ) -> Dict:
         """
-        Attach a file to a Jira issue.
+        Attach a file to a story.
 
         Uses multipart/form-data upload via the Jira attachment REST API.
         Requires X-Atlassian-Token: no-check header.

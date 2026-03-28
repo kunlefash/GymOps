@@ -82,7 +82,7 @@ class StoryEntry:
     points: Optional[int] = None
     estimate_rationale: List[str] = field(default_factory=list)
     selectable: bool = False
-    jira_key: Optional[str] = None
+    story_key: Optional[str] = None
 
     @property
     def sort_key(self) -> Tuple[int, int]:
@@ -747,7 +747,7 @@ def build_plan(
     mapping_template = str(
         jira_config.get(
             "mapping_file",
-            "{project-root}/_bmad-output/implementation-artifacts/jira-key-map.yaml",
+            "{project-root}/_bmad-output/implementation-artifacts/story-key-map.yaml",
         )
     )
     mapping_path = resolve_path(mapping_template, repo_root)
@@ -819,15 +819,15 @@ def build_plan(
     mapping_items = project_mapping.get("items", []) if isinstance(project_mapping, dict) else []
     jira_by_bmad: Dict[str, str] = {}
     for item in mapping_items:
-        if item.get("bmad_type") == "story" and item.get("jira_key"):
-            jira_by_bmad[str(item.get("bmad_id"))] = str(item.get("jira_key"))
+        if item.get("bmad_type") == "story" and item.get("story_key"):
+            jira_by_bmad[str(item.get("bmad_id"))] = str(item.get("story_key"))
 
     done_ids = {item.bmad_id for item in entries if item.status == "done"}
     selected_entries = [item for item in entries if item.bmad_id in selected_set]
     selected_entries.sort(key=lambda story: story.sort_key)
 
     for item in selected_entries:
-        item.jira_key = jira_by_bmad.get(item.bmad_id)
+        item.story_key = jira_by_bmad.get(item.bmad_id)
 
     waves = assign_waves(selected_entries, done_ids)
 
@@ -865,7 +865,7 @@ def build_plan(
                 "story_points": item.points,
                 "dependencies": item.dependencies,
                 "wave": waves.get(item.bmad_id),
-                "jira_key": item.jira_key,
+                "story_key": item.story_key,
                 "estimate_rationale": item.estimate_rationale,
                 "body": item.body,
             }
@@ -940,9 +940,9 @@ def build_plan(
             f"--project {project_key} --type scrum --max-results 50"
         ),
         "jira_estimation": [
-            f"python3 .claude/skills/jira-agile/scripts/jira_agile.py set-estimation <board_id> {item['jira_key']} {item['story_points']}"
+            f"python3 .claude/skills/jira-agile/scripts/jira_agile.py set-estimation <board_id> {item['story_key']} {item['story_points']}"
             for item in selected_payload
-            if item.get("jira_key")
+            if item.get("story_key")
         ],
         "jira_create_sprint": (
             "python3 .claude/skills/jira-agile/scripts/jira_agile.py create-sprint <board_id> "

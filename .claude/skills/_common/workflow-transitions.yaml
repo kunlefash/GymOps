@@ -1,5 +1,5 @@
-# Jira workflow transition mappings for CI skills.
-# Script: zone_prepare_story.py transition-jira --skill <skill> --outcome <outcome>
+# GitHub Issues workflow transition mappings for CI skills.
+# Script: zone_prepare_story.py transition-github-issues --skill <skill> --outcome <outcome>
 
 transitions:
   zone-prepare-story:

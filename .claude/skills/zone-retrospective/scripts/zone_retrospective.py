@@ -110,12 +110,12 @@ def die(message: str, code: int = 1) -> None:
 
 
 def _load_items(repo_root: Path):
-    """Load jira-key-map.yaml and return (active_project_key, items list)."""
-    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "jira-key-map.yaml"
+    """Load story-key-map.yaml and return (active_project_key, items list)."""
+    map_path = repo_root / "_bmad-output" / "implementation-artifacts" / "story-key-map.yaml"
     data = read_yaml(map_path)
     active_project_key = data.get("active_project_key")
     if not active_project_key:
-        die("active_project_key not found in jira-key-map.yaml")
+        die("active_project_key not found in story-key-map.yaml")
     items = data.get("projects", {}).get(active_project_key, {}).get("items", [])
     return active_project_key, items
 
@@ -156,19 +156,19 @@ def cmd_sync_superrepo(args: argparse.Namespace) -> int:
 def cmd_resolve_epic(args: argparse.Namespace) -> int:
     """Phase 1: Find epic, verify all stories done, check for existing analysis."""
     repo_root = Path(args.repo_root).resolve()
-    epic_jira_key = args.jira_key
+    epic_story_key = args.story_key
 
     _, items = _load_items(repo_root)
 
     # Find the epic
     epic = None
     for item in items:
-        if item.get("jira_key") == epic_jira_key and item.get("bmad_type") == "epic":
+        if item.get("story_key") == epic_story_key and item.get("bmad_type") == "epic":
             epic = item
             break
 
     if epic is None:
-        die(f"KEY_NOT_FOUND: Epic '{epic_jira_key}' not found in jira-key-map.yaml")
+        die(f"KEY_NOT_FOUND: Epic '{epic_story_key}' not found in story-key-map.yaml")
 
     epic_bmad_id = str(epic["bmad_id"])
     epic_title = str(epic["bmad_title"])
@@ -177,11 +177,11 @@ def cmd_resolve_epic(args: argparse.Namespace) -> int:
     # Find all stories for this epic
     stories = [
         item for item in items
-        if item.get("parent_jira_key") == epic_jira_key and item.get("bmad_type") == "story"
+        if item.get("parent_story_key") == epic_story_key and item.get("bmad_type") == "story"
     ]
 
     if not stories:
-        die(f"EPIC_NOT_COMPLETE: No stories found for epic '{epic_jira_key}'")
+        die(f"EPIC_NOT_COMPLETE: No stories found for epic '{epic_story_key}'")
 
     # Load sprint-status.yaml
     sprint_path = repo_root / "_bmad-output" / "implementation-artifacts" / "sprint-status.yaml"
@@ -202,7 +202,7 @@ def cmd_resolve_epic(args: argparse.Namespace) -> int:
         slug = _story_slug(s_bmad_id, s_title)
         status = dev_status.get(slug)
         if status != "done":
-            incomplete.append(f"{story.get('jira_key')} ({slug}): {status!r}")
+            incomplete.append(f"{story.get('story_key')} ({slug}): {status!r}")
         story_path = impl_dir / "stories" / f"{slug}.md"
         story_file_paths.append(str(story_path))
 
@@ -214,7 +214,7 @@ def cmd_resolve_epic(args: argparse.Namespace) -> int:
     if existing:
         emit_json({
             "action": "ANALYSIS_ALREADY_EXISTS",
-            "epic_jira_key": epic_jira_key,
+            "epic_story_key": epic_story_key,
             "epic_bmad_id": epic_bmad_id,
             "epic_slug": epic_slug,
             "epic_title": epic_title,
@@ -255,7 +255,7 @@ def cmd_resolve_epic(args: argparse.Namespace) -> int:
     analysis_file = str(impl_dir / f"epic-{epic_slug}-retro-analysis-{date_str}.md")
 
     emit_json({
-        "epic_jira_key": epic_jira_key,
+        "epic_story_key": epic_story_key,
         "epic_bmad_id": epic_bmad_id,
         "epic_title": epic_title,
         "epic_slug": epic_slug,
@@ -273,9 +273,9 @@ def cmd_resolve_epic(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_check_epic_complete(args: argparse.Namespace) -> int:
-    """Given a story Jira key, check if all epic stories are done and not yet analysed."""
+    """Given a story story key, check if all epic stories are done and not yet analysed."""
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key  # story key
+    story_key = args.story_key  # story key
 
     try:
         _, items = _load_items(repo_root)
@@ -284,20 +284,20 @@ def cmd_check_epic_complete(args: argparse.Namespace) -> int:
         return 0
 
     # Find the story's parent epic
-    parent_jira_key: Optional[str] = None
+    parent_story_key: Optional[str] = None
     for item in items:
-        if item.get("jira_key") == jira_key and item.get("bmad_type") == "story":
-            parent_jira_key = item.get("parent_jira_key")
+        if item.get("story_key") == story_key and item.get("bmad_type") == "story":
+            parent_story_key = item.get("parent_story_key")
             break
 
-    if not parent_jira_key:
+    if not parent_story_key:
         emit_json({"epic_complete": False})
         return 0
 
     # Find the epic's bmad_id
     epic_bmad_id: Optional[str] = None
     for item in items:
-        if item.get("jira_key") == parent_jira_key and item.get("bmad_type") == "epic":
+        if item.get("story_key") == parent_story_key and item.get("bmad_type") == "epic":
             epic_bmad_id = str(item["bmad_id"])
             break
 
@@ -310,7 +310,7 @@ def cmd_check_epic_complete(args: argparse.Namespace) -> int:
     # Find all stories for this epic
     stories = [
         item for item in items
-        if item.get("parent_jira_key") == parent_jira_key and item.get("bmad_type") == "story"
+        if item.get("parent_story_key") == parent_story_key and item.get("bmad_type") == "story"
     ]
 
     if not stories:
@@ -345,7 +345,7 @@ def cmd_check_epic_complete(args: argparse.Namespace) -> int:
 
     emit_json({
         "epic_complete": all_done,
-        "epic_jira_key": parent_jira_key,
+        "epic_story_key": parent_story_key,
         "epic_bmad_id": epic_bmad_id,
         "already_analyzed": already_analyzed,
     })
@@ -448,11 +448,11 @@ def cmd_mark_analysis_done(args: argparse.Namespace) -> int:
 def cmd_commit_superrepo(args: argparse.Namespace) -> int:
     """Stage _bmad-output/ only and commit + push super-repo."""
     repo_root = Path(args.repo_root).resolve()
-    jira_key = args.jira_key
+    story_key = args.story_key
     title = args.title
     cwd = str(repo_root)
 
-    commit_msg = f"{jira_key}: {title} - retro analysis complete"
+    commit_msg = f"{story_key}: {title} - retro analysis complete"
 
     # Stage _bmad-output/
     git(["add", "_bmad-output/"], cwd=cwd, check=False)
@@ -475,8 +475,8 @@ def cmd_commit_superrepo(args: argparse.Namespace) -> int:
         return 0
 
     try:
-        git(["config", "user.name", "Zone AI Agent"], cwd=cwd, check=False)
-        git(["config", "user.email", "ai@zonenetwork.com"], cwd=cwd, check=False)
+        git(["config", "user.name", "GymOps AI Agent"], cwd=cwd, check=False)
+        git(["config", "user.email", "ai@gymops.dev"], cwd=cwd, check=False)
         git(["commit", "-m", commit_msg], cwd=cwd)
         log_result = git(["rev-parse", "HEAD"], cwd=cwd)
         commit_hash = log_result.stdout.strip()
@@ -512,21 +512,21 @@ def cmd_commit_superrepo(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     """Phase 6: Check analysis status and emit sentinel JSON."""
     repo_root = Path(args.repo_root).resolve()
-    epic_jira_key = args.jira_key
+    epic_story_key = args.story_key
 
     epic_bmad_id_arg = getattr(args, "epic_bmad_id", None)
     if epic_bmad_id_arg:
         epic_bmad_id = str(epic_bmad_id_arg)
     else:
-        # Resolve epic_bmad_id from jira_key
+        # Resolve epic_bmad_id from story_key
         _, items = _load_items(repo_root)
         epic = None
         for item in items:
-            if item.get("jira_key") == epic_jira_key and item.get("bmad_type") == "epic":
+            if item.get("story_key") == epic_story_key and item.get("bmad_type") == "epic":
                 epic = item
                 break
         if epic is None:
-            die(f"Epic '{epic_jira_key}' not found in jira-key-map.yaml")
+            die(f"Epic '{epic_story_key}' not found in story-key-map.yaml")
         epic_bmad_id = str(epic["bmad_id"])
 
     epic_slug = epic_bmad_id.replace(".", "-")
@@ -551,7 +551,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
     result = json.dumps({
         "status": status_val,
-        "epic_key": epic_jira_key,
+        "epic_key": epic_story_key,
         "analysis_file": analysis_file,
     })
     print(f"{SENTINEL}{result}{SENTINEL}")
@@ -574,12 +574,12 @@ def main() -> int:
 
     # resolve-epic
     p_resolve = subparsers.add_parser("resolve-epic", help="Phase 1: Resolve epic and verify all stories done")
-    p_resolve.add_argument("--jira-key", required=True, help="Epic Jira key (e.g. CLSDLC-1)")
+    p_resolve.add_argument("--story-key", required=True, help="Epic story key (e.g. CLSDLC-1)")
     p_resolve.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # check-epic-complete
     p_check = subparsers.add_parser("check-epic-complete", help="Check if all stories in an epic are done (given a story key)")
-    p_check.add_argument("--jira-key", required=True, help="Story Jira key (e.g. CLSDLC-101)")
+    p_check.add_argument("--story-key", required=True, help="Story story key (e.g. CLSDLC-101)")
     p_check.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # mark-analysis-pending
@@ -595,14 +595,14 @@ def main() -> int:
     # commit-superrepo
     p_commit = subparsers.add_parser("commit-superrepo", help="Phase 4: Commit and push super-repo _bmad-output/ changes")
     p_commit.add_argument("--epic-bmad-id", required=True, help="Epic BMAD ID (e.g. 1)")
-    p_commit.add_argument("--jira-key", required=True, help="Epic Jira key")
+    p_commit.add_argument("--story-key", required=True, help="Epic story key")
     p_commit.add_argument("--title", required=True, help="Epic title for commit message")
     p_commit.add_argument("--repo-root", default=".", help="Repository root directory")
 
     # status
     p_status = subparsers.add_parser("status", help="Phase 6: Output status sentinel")
-    p_status.add_argument("--epic-bmad-id", default=None, help="Epic BMAD ID (e.g. 1); resolved from --jira-key if omitted")
-    p_status.add_argument("--jira-key", required=True, help="Epic Jira key")
+    p_status.add_argument("--epic-bmad-id", default=None, help="Epic BMAD ID (e.g. 1); resolved from --story-key if omitted")
+    p_status.add_argument("--story-key", required=True, help="Epic story key")
     p_status.add_argument("--repo-root", default=".", help="Repository root directory")
 
     parsed = parser.parse_args()

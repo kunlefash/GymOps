@@ -1,6 +1,6 @@
 ---
 name: zone-test-review
-description: Headless CI skill that resolves a Jira key to a BMAD story, executes the TEA test-review workflow in YOLO mode, commits/pushes the test quality report, and creates PRs on PASS.
+description: Headless CI skill that resolves a story key to a BMAD story, executes the TEA test-review workflow in YOLO mode, commits/pushes the test quality report, and creates PRs on PASS.
 version: 1.0.0
 triggers:
   keywords:
@@ -14,12 +14,12 @@ triggers:
 
 # Zone Test Review — Headless CI Test-Review Skill
 
-Autonomous, CI-friendly skill that takes a Jira key, resolves it to a BMAD story, runs the full TEA `testarch-test-review` workflow without user interaction, and commits results to the appropriate branch of the super repo.
+Autonomous, CI-friendly skill that takes a story key, resolves it to a BMAD story, runs the full TEA `testarch-test-review` workflow without user interaction, and commits results to the appropriate branch of the super repo.
 
-**Input**: `%jira_key%` (e.g. `BMAD-152`)
+**Input**: `%github-issues_key%` (e.g. `BMAD-152`)
 **Output**: `###ZONE-TEST-REVIEW-RESULT###{"status":"0","score":N,"grade":"X","recommendation":"..."}###ZONE-TEST-REVIEW-RESULT###` on PASS (recommendation = Approve or Approve with Comments), `###ZONE-TEST-REVIEW-RESULT###{"status":"1",...}###ZONE-TEST-REVIEW-RESULT###` on FAIL.
 
-**NOTE**: When working with submodules, you should spawn subagents per submodule/repo to perform tasks. This will greatly improve speed.
+**NOTE**: When working with modules, you should spawn subagents per module/repo to perform tasks. This will greatly improve speed.
 
 ---
 
@@ -28,14 +28,14 @@ Autonomous, CI-friendly skill that takes a Jira key, resolves it to a BMAD story
 If this prompt contains `PHASES 0-2 PRE-RESOLVED`, the pipeline has already
 executed Phases 0-2.5. In this case:
 
-1. **Skip Phases 0, 1, 2, 2.5** — do NOT run sync-superrepo, resolve,
+1. **Skip Phases 0, 1, 2, 2.5** — do NOT run sync-repo, resolve,
    prepare-branches, or read domain skill files.
 2. **Extract session variables** from the JSON in `PHASES 0-2 PRE-RESOLVED`:
    - `{bmad_id}`, `{bmad_title}`, `{story_key}`, `{story_branch}`,
-     `{story_file_path}`, `{jira_key}`, `{epic_branch}`, `{epic_key}`, `{parent_jira_key}`, etc.
+     `{story_file_path}`, `{github-issues_key}`, `{epic_branch}`, `{epic_key}`, `{parent_github-issues_key}`, etc.
 3. **Internalize domain skills** from the `DOMAIN SKILLS` section.
 4. If `prewarm_status` is `"partial"`, review `prepare_branches` output for
-   errors and work with successfully prepared submodules only.
+   errors and work with successfully prepared modules only.
 5. **Begin at Phase 3** (the test review phase).
 
 If no `PHASES 0-2 PRE-RESOLVED` marker exists, execute all phases from Phase 0.
@@ -46,18 +46,18 @@ If no `PHASES 0-2 PRE-RESOLVED` marker exists, execute all phases from Phase 0.
 
 Run:
 ```
-python3 .claude/skills/zone-code-review/scripts/zone_review.py sync-superrepo --repo-root .
+python3 .claude/skills/zone-code-review/scripts/zone_review.py sync-repo --repo-root .
 ```
 
-Pulls the latest super-repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
-**HALT protocol (Phase 0 failure):** If exit code is non-zero, set `{blocker_summary}` to `"SYNC_FAILED: super-repo sync failed — branch may be behind or have conflicts"`, then run Phase 4.7 (unconditional Jira comment) and Phase 4.8 (Jira transition to Blocked) using `%jira_key%` as the issue key, then exit with status `"1"`. Do NOT proceed to Phase 1.
+Pulls the latest repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
+**HALT protocol (Phase 0 failure):** If exit code is non-zero, set `{blocker_summary}` to `"SYNC_FAILED: repo sync failed — branch may be behind or have conflicts"`, then run Phase 4.7 (unconditional GitHub Issues comment) and Phase 4.8 (GitHub Issues transition to Blocked) using `%github-issues_key%` as the issue key, then exit with status `"1"`. Do NOT proceed to Phase 1.
 
 
 ---
 
 ## Phase 0.5: Pre-Execution Workspace Check
 
-Before any submodule operations, verify the workspace is clean:
+Before any module operations, verify the workspace is clean:
 ```
 git status --porcelain
 ```
@@ -66,29 +66,29 @@ Evaluate the output **only** for pre-existing dirty state that this skill did no
 - If `modules/*` entries appear as modified **AND** Phase 2 `prepare-branches` has NOT yet run in this session → genuine blocker.
 - If `.log` files appear at repo root → genuine blocker (stale CI artefacts from a previous run).
 
-**If a genuine pre-existing blocker is found**: set `{blocker_summary}` = `"WORKSPACE_DIRTY: unexpected pre-existing dirty state before Phase 2 — <list of dirty paths>"`, then run Phase 4.7 (unconditional Jira comment) and Phase 4.8 (Jira transition to Blocked) using `%jira_key%` as the issue key, then exit with status `"1"`. Do NOT proceed to Phase 1.
+**If a genuine pre-existing blocker is found**: set `{blocker_summary}` = `"WORKSPACE_DIRTY: unexpected pre-existing dirty state before Phase 2 — <list of dirty paths>"`, then run Phase 4.7 (unconditional GitHub Issues comment) and Phase 4.8 (GitHub Issues transition to Blocked) using `%github-issues_key%` as the issue key, then exit with status `"1"`. Do NOT proceed to Phase 1.
 
 **YOLO mode**: Never ask the user about dirty state — classify automatically and either continue or halt per the rules above.
 
 ---
 
-## Phase 1: Resolve Jira Key to Story
+## Phase 1: Resolve GitHub Issues Key to Story
 
 Run:
 ```
 python3 .claude/skills/zone-code-review/scripts/zone_review.py resolve \
-  --jira-key %jira_key% --repo-root .
+  --story-key %github-issues_key% --repo-root .
 ```
 
-Capture JSON output as session variables: `{bmad_id}`, `{bmad_title}`, `{story_key}`, `{story_branch}`, `{story_file_path}`, `{jira_key}`.
-If the output includes `epic_branch`, also capture `{epic_branch}`, `{epic_key}`, `{parent_jira_key}` — these are used in Phase 4.5 for PR creation.
+Capture JSON output as session variables: `{bmad_id}`, `{bmad_title}`, `{story_key}`, `{story_branch}`, `{story_file_path}`, `{github-issues_key}`.
+If the output includes `epic_branch`, also capture `{epic_branch}`, `{epic_key}`, `{parent_github-issues_key}` — these are used in Phase 4.5 for PR creation.
 **HALT protocol (Phase 1 failure):** If exit code is non-zero, classify the blocker from the script's error output:
-- `KEY_NOT_FOUND` — Jira key not present in `jira-key-map.yaml`
+- `KEY_NOT_FOUND` — story key not present in `story-key-map.yaml`
 - `STORY_FILE_MISSING` — story file not found (story not yet prepared by zone-prepare-story)
 - `INVALID_STATUS` — story is not in a reviewable status
 - `SPRINT_STATUS_MISSING` — `sprint-status.yaml` absent or malformed
 
-Set `{blocker_summary}` to `"<BLOCKER_TYPE>: <error message from script>"`, then run Phase 4.7 (unconditional Jira comment) and Phase 4.8 (Jira transition to Blocked) using `%jira_key%` as the issue key, then exit with status `"1"`. Do NOT proceed to Phase 2.
+Set `{blocker_summary}` to `"<BLOCKER_TYPE>: <error message from script>"`, then run Phase 4.7 (unconditional GitHub Issues comment) and Phase 4.8 (GitHub Issues transition to Blocked) using `%github-issues_key%` as the issue key, then exit with status `"1"`. Do NOT proceed to Phase 2.
 
 
 ---
@@ -101,18 +101,18 @@ python3 .claude/skills/zone-code-review/scripts/zone_review.py prepare-branches 
   --story-file {story_file_path} --story-branch {story_branch} --checkout-only --repo-root .
 ```
 
-Capture JSON output. Also capture `{domain_skills}` — the list of domain skill objects resolved from the checked-out submodules. Capture `{submodules_json}` as the `submodules` field (JSON array). Initialize `{blocker_summary}` as empty string.
+Capture JSON output. Also capture `{domain_skills}` — the list of domain skill objects resolved from the checked-out modules. Capture `{modules_json}` as the `modules` field (JSON array). Initialize `{blocker_summary}` as empty string.
 
-Verify at least one submodule has `status` in `checked_out_remote` or `checked_out_local`. If **all** submodules are `skipped` or `error` (no tests to review):
-- **Tier 3 ESCALATE-JIRA**: classify blocker as `BRANCH_NOT_FOUND`, list the missing branches per submodule.
-- Append to `{blocker_summary}`: e.g., `BRANCH_NOT_FOUND: story branch '{story_branch}' not found in any submodule (checked: <list>)`.
+Verify at least one module has `status` in `checked_out_remote` or `checked_out_local`. If **all** modules are `skipped` or `error` (no tests to review):
+- **Tier 3 ESCALATE-GitHub Issues**: classify blocker as `BRANCH_NOT_FOUND`, list the missing branches per module.
+- Append to `{blocker_summary}`: e.g., `BRANCH_NOT_FOUND: story branch '{story_branch}' not found in any module (checked: <list>)`.
 - Skip Phases 2.5, 3, 4 — proceed directly to Phase 4.7 with `status: "1"`.
 
-**Checkout only**: Branches are never created; only existing branches (remote or local) are checked out. Submodules where the story branch does not exist are skipped with `status: "skipped"`. If at least one submodule was checked out, proceed to Phase 2.5.
+**Checkout only**: Branches are never created; only existing branches (remote or local) are checked out. Submodules where the story branch does not exist are skipped with `status: "skipped"`. If at least one module was checked out, proceed to Phase 2.5.
 
-**E2E/API test repo**: `zoneqa_automation` is automatically included in the checkout list by `zone_review.py` when any story-referenced module is a testable source module. This ensures E2E and API tests written by `zone-qa` into `tests/cardless/pwa/` and `tests/cardless/api/` are checked out and available for review. Its entry will have `"role": "e2e_test_repo"` in the Phase 2 output.
+**E2E/API test repo**: `tests/e2e` is automatically included in the checkout list by `zone_review.py` when any story-referenced module is a testable source module. This ensures E2E and API tests written by `zone-qa` into `tests/cardless/pwa/` and `tests/cardless/api/` are checked out and available for review. Its entry will have `"role": "e2e_test_repo"` in the Phase 2 output.
 
-**Expected dirty state**: After `prepare-branches` runs, `git status` on the super-repo will show checked-out submodule directories as modified (e.g., `M modules/zone.framework`). This is expected. Do NOT treat this as a blocker. Phase 4's `commit-superrepo` script handles cleanup via `git reset HEAD modules/`.
+**Expected dirty state**: After `prepare-branches` runs, `git status` on the repo will show checked-out module directories as modified (e.g., `M src/framework`). This is expected. Do NOT treat this as a blocker. Phase 4's `commit-repo` script handles cleanup via `git reset HEAD modules/`.
 
 ---
 
@@ -136,9 +136,9 @@ Invoke the **bmad-tea-testarch-test-review** workflow. The test-review workflow 
 3. **Pass workflow config**: `_bmad/tea/workflows/testarch/test-review/workflow.yaml` as `workflow-config`.
 4. **Set context**:
    - `story_path` = `{story_file_path}`
-   - `review_scope = "directory"` (review all test files changed in story branch per submodule)
+   - `review_scope = "directory"` (review all test files changed in story branch per module)
    - `test_stack_type = "auto"`
-5. **E2E/API test review context**: When the TEA workflow reviews test files in `zoneqa_automation` (identified by `"role": "e2e_test_repo"` in the Phase 2 output), apply `zone-qa-automation` conventions (loaded in Phase 2.5) as the quality baseline. Specifically validate:
+5. **E2E/API test review context**: When the TEA workflow reviews test files in `tests/e2e` (identified by `"role": "e2e_test_repo"` in the Phase 2 output), apply `zone-qa-automation` conventions (loaded in Phase 2.5) as the quality baseline. Specifically validate:
    - Page objects extend `BasePage` from `pageObjectClass/basePage.js`
    - API tests use `getHeadersForBank(request, institution)` — never inline token fetch
    - Tests use multi-institution loops (`BANKA`/`BANKB`/`OFI`) for cross-tenant coverage
@@ -165,14 +165,14 @@ Invoke the **bmad-tea-testarch-test-review** workflow. The test-review workflow 
 - Skip ALL user confirmations — auto-approve every gate.
 - **No fixes**: NEVER fix issues in the tests. Only report findings and create action items for tracking.
 - Never pause for user input. Drive all choices toward completion.
-- If a submodule was skipped in Phase 2 (branch not found), review the submodules that were checked out; do not HALT.
+- If a module was skipped in Phase 2 (branch not found), review the modules that were checked out; do not HALT.
 
 **HALT protocol**:
 
 | Tier | Condition | Action |
 |------|-----------|--------|
-| **Tier 1** — Submodule-level failures | Individual submodule test discovery fails | Retry once; if still failing, skip that submodule with log; continue reviewing remaining submodules |
-| **Tier 3** — Fundamental blockers | Story file unreadable or all submodules skipped | ESCALATE-JIRA immediately — classify blocker (`STORY_FILE_MISSING \| BRANCH_NOT_FOUND`), append to `{blocker_summary}`, skip to Phase 4.7 with `status: "1"` |
+| **Tier 1** — Submodule-level failures | Individual module test discovery fails | Retry once; if still failing, skip that module with log; continue reviewing remaining modules |
+| **Tier 3** — Fundamental blockers | Story file unreadable or all modules skipped | ESCALATE-GitHub Issues immediately — classify blocker (`STORY_FILE_MISSING \| BRANCH_NOT_FOUND`), append to `{blocker_summary}`, skip to Phase 4.7 with `status: "1"` |
 
 ---
 
@@ -180,8 +180,8 @@ Invoke the **bmad-tea-testarch-test-review** workflow. The test-review workflow 
 
 Run:
 ```
-python3 .claude/skills/zone-test-review/scripts/zone_test_review.py commit-superrepo \
-  --story-key {story_key} --jira-key {jira_key} \
+python3 .claude/skills/zone-test-review/scripts/zone_test_review.py commit-repo \
+  --story-key {story_key} --story-key {github-issues_key} \
   --title "{bmad_title}" --repo-root .
 ```
 
@@ -193,25 +193,25 @@ Capture JSON output. If `action` is `"skipped"`, no `_bmad-output/` changes were
 
 PASS = `{recommendation}` is "Approve" or "Approve with Comments". If the recommendation is anything else, skip to Phase 4.6.
 
-If `{epic_branch}` was not resolved in Phase 1 (e.g., bug fix stories with no parent epic), pass `--epic-branch ""` — the script resolves the target branch per-submodule from `.gitmodules` (default: `development`).
+If `{epic_branch}` was not resolved in Phase 1 (e.g., bug fix stories with no parent epic), pass `--epic-branch ""` — the script resolves the target branch per-module from `.gitconfig` (default: `development`).
 
 If the review PASSES, run:
 ```
 python3 .claude/skills/zone-test-review/scripts/zone_test_review.py create-pullrequests \
   --story-branch {story_branch} --epic-branch "{epic_branch}" \
-  --jira-key {jira_key} --title "{bmad_title}" \
-  --submodules '{submodules_json}' --story-file {story_file_path} --repo-root .
+  --story-key {github-issues_key} --title "{bmad_title}" \
+  --modules '{modules_json}' --story-file {story_file_path} --repo-root .
 ```
 
-Where `{submodules_json}` is the JSON array from Phase 2 output (`submodules` field). Escape it as a single-quoted JSON string.
+Where `{modules_json}` is the JSON array from Phase 2 output (`modules` field). Escape it as a single-quoted JSON string.
 
 Capture JSON output. Log the `created_count`, `error_count`, and `skipped_count`. Capture `{pr_url}` from the first `pr_url` in `results` where `status` is `"created"` or `"already_exists"`. PR creation errors are non-fatal — always proceed to Phase 4.6.
 
-**PR description**: The full content of `{story_file_path}`, read raw, truncated to 64 KB for Bitbucket API limits. This differs from zone-code-review's extracted-sections approach.
+**PR description**: The full content of `{story_file_path}`, read raw, truncated to 64 KB for GitHub API limits. This differs from zone-code-review's extracted-sections approach.
 
 ---
 
-## Phase 4.6: Attach Files to Jira
+## Phase 4.6: Attach Files to GitHub Issues
 
 ### Phase 4.6a — Attach Story File (Conditional — PASS only)
 
@@ -220,7 +220,7 @@ Capture JSON output. Log the `created_count`, `error_count`, and `skipped_count`
 Run (best-effort, non-fatal):
 ```
 python3 .claude/skills/zone-code-review/scripts/zone_review.py attach-story \
-  --jira-key {jira_key} --story-file {story_file_path} --repo-root .
+  --story-key {github-issues_key} --story-file {story_file_path} --repo-root .
 ```
 
 ### Phase 4.6b — Attach Test-Review Report (Unconditional)
@@ -230,14 +230,14 @@ python3 .claude/skills/zone-code-review/scripts/zone_review.py attach-story \
 Run:
 ```
 python3 .claude/skills/zone-code-review/scripts/zone_review.py attach-story \
-  --jira-key {jira_key} --story-file {test_artifacts}/test-review.md --repo-root .
+  --story-key {github-issues_key} --story-file {test_artifacts}/test-review.md --repo-root .
 ```
 
 Set `{test_review_attachment_name}` = `test-review.md` on success, empty string on failure or skip.
 
 ---
 
-## Phase 4.7: Post Jira Review Result Comment (Unconditional)
+## Phase 4.7: Post GitHub Issues Review Result Comment (Unconditional)
 
 **Always runs** — regardless of PASS/FAIL, skipped phases, or Tier 3 blockers. Best-effort, non-fatal.
 
@@ -249,7 +249,7 @@ Determine `{status_emoji}` and `{status_word}`:
 
 Run:
 ```
-python3 .claude/skills/jira-agile/scripts/jira_agile.py add-comment {jira_key} \
+python3 .claude/skills/github-issues-agile/scripts/github-issues_agile.py add-comment {github-issues_key} \
   --format markdown --body-stdin <<'EOF'
 ### {status_emoji} AI Test Review {status_word}
 
@@ -278,12 +278,12 @@ Where:
 
 ---
 
-## Phase 4.8: Jira Transition (Unconditional)
+## Phase 4.8: GitHub Issues Transition (Unconditional)
 
 **Always runs**. Determine `{outcome}`: `blocked` if `{blocker_summary}` is non-empty; `pass` if recommendation is "Approve" or "Approve with Comments"; `fail` otherwise. Run (best-effort, non-fatal):
 ```
-python3 .claude/skills/zone-prepare-story/scripts/zone_prepare_story.py transition-jira \
-  --jira-key {jira_key} --skill zone-test-review --outcome {outcome} --repo-root .
+python3 .claude/skills/zone-prepare-story/scripts/zone_prepare_story.py transition-github-issues \
+  --story-key {github-issues_key} --skill zone-test-review --outcome {outcome} --repo-root .
 ```
 
 ---
@@ -311,26 +311,26 @@ The script emits the sentinel line directly:
 |------|--------|
 | YOLO mode | All workflow confirmations auto-approved; all choices drive toward completion |
 | No test fixes | NEVER fix issues in tests; report findings AND create action items for CRITICAL/HIGH violations |
-| Checkout only | NEVER create submodule branches; only checkout existing branches (remote or local) |
-| Submodule checkout first | Checkout story branches in referenced submodules BEFORE the test-review workflow runs |
-| Submodule init | Only initialize submodules that the story file references in Tasks/Subtasks |
+| Checkout only | NEVER create module branches; only checkout existing branches (remote or local) |
+| Submodule checkout first | Checkout story branches in referenced modules BEFORE the test-review workflow runs |
+| Submodule init | Only initialize modules that the story file references in Tasks/Subtasks |
 | Super-repo branch | NEVER create a new branch or checkout another branch — stay on current branch |
 | Super-repo staging | NEVER `git add` any `modules/*` paths — only `_bmad-output/` artifacts |
 | Headless/CI | Zero user interaction — all decisions automated — JSON-only final output |
-| Commit message | Always use the format: `{jira_key}: {bmad_title} - test review report` |
+| Commit message | Always use the format: `{github-issues_key}: {bmad_title} - test review report` |
 | Git PUSH | Ensure all local commits are pushed automatically. No further instructions required |
 | CI output | Result emitted as `###ZONE-TEST-REVIEW-RESULT###...###ZONE-TEST-REVIEW-RESULT###` sentinel in stdout — TeamCity greps for it |
 | Status criteria | Status `"0"` = PASS (recommendation = Approve or Approve with Comments); `"1"` = FAIL |
-| review_scope | Always `"directory"` — review all test files in story branch per submodule |
+| review_scope | Always `"directory"` — review all test files in story branch per module |
 | Test report path | `{test_artifacts}/test-review.md` per TEA workflow config |
-| PR creation | Only create PRs when recommendation = Approve/Approve with Comments; targets epic_branch if available, otherwise submodule default branch |
+| PR creation | Only create PRs when recommendation = Approve/Approve with Comments; targets epic_branch if available, otherwise module default branch |
 | PR description | Full story file content (raw), truncated to 64 KB |
 | PR auth | Prefers `BB_EMAIL` + `BB_API_TOKEN` (API token auth); falls back to legacy `BB_USERNAME` + `BB_APP_PASSWORD`; skips gracefully if neither is configured |
-| Jira transition | Outcome resolved via workflow-transitions.yaml; best-effort, non-fatal |
-| Jira attachment | Attach story file AND test-review.md; both best-effort (non-fatal) |
-| Phase 4.7 | **Always runs** — unconditional Jira comment with ✅/⚠️ review result; runs before Phase 4.8 transition; never skipped |
-| Blocker summary | `{blocker_summary}` initialized in Phase 2; appended by Tier 3 ESCALATE-JIRA events; posted to Jira in Phase 4.7 |
-| Expected dirty submodule state | After Phase 2, `git status` will show `M modules/<name>` — this is intentional. Never treat this as a blocker or ask the user; continue to Phase 2.5 |
+| GitHub Issues transition | Outcome resolved via workflow-transitions.yaml; best-effort, non-fatal |
+| GitHub Issues attachment | Attach story file AND test-review.md; both best-effort (non-fatal) |
+| Phase 4.7 | **Always runs** — unconditional GitHub Issues comment with ✅/⚠️ review result; runs before Phase 4.8 transition; never skipped |
+| Blocker summary | `{blocker_summary}` initialized in Phase 2; appended by Tier 3 ESCALATE-GitHub Issues events; posted to GitHub Issues in Phase 4.7 |
+| Expected dirty module state | After Phase 2, `git status` will show `M modules/<name>` — this is intentional. Never treat this as a blocker or ask the user; continue to Phase 2.5 |
 
 ---
 
@@ -340,12 +340,12 @@ The script emits the sentinel line directly:
 |---------|------|
 | Test review script | `.claude/skills/zone-test-review/scripts/zone_test_review.py` |
 | Shared review script | `.claude/skills/zone-code-review/scripts/zone_review.py` |
-| Jira key map | `_bmad-output/implementation-artifacts/jira-key-map.yaml` |
+| story key map | `_bmad-output/implementation-artifacts/story-key-map.yaml` |
 | Story files | `_bmad-output/implementation-artifacts/stories/{story_key}.md` |
 | Sprint status | `_bmad-output/implementation-artifacts/sprint-status.yaml` |
 | TEA config | `_bmad/tea/config.yaml` |
 | Workflow engine | `_bmad/core/tasks/workflow.xml` |
 | Test-review workflow | `_bmad/tea/workflows/testarch/test-review/workflow.yaml` |
 | Test review report | `{test_artifacts}/test-review.md` |
-| Submodule→skill map | `.claude/skills/zone-test-review/submodule-skill-map.yaml` |
+| Submodule→skill map | `.claude/skills/zone-test-review/module-skill-map.yaml` |
 | Domain skills | `.claude/skills/{skill-name}/SKILL.md` (loaded dynamically in Phase 2.5) |

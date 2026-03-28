@@ -14,9 +14,9 @@ triggers:
 
 # Zone Retrospective — Headless CI Pre-Analysis Skill
 
-Autonomous, CI-friendly skill that takes an epic Jira key, verifies all stories are done, and synthesizes a pre-analysis brief directly from story file data. Does NOT invoke `_bmad/bmm/workflows/` — that is Mode 2 (interactive facilitated session, triggered via `/retrospective`).
+Autonomous, CI-friendly skill that takes an epic story key, verifies all stories are done, and synthesizes a pre-analysis brief directly from story file data. Does NOT invoke `_bmad/bmm/workflows/` — that is Mode 2 (interactive facilitated session, triggered via `/retrospective`).
 
-**Input**: `epic_jira_key` (e.g. `CLSDLC-1`)
+**Input**: `epic_github-issues_key` (e.g. `CLSDLC-1`)
 **Output**: `###ZONE-RETRO-RESULT###{"status":"0","epic_key":"CLSDLC-1","analysis_file":"..."}###ZONE-RETRO-RESULT###` on success, `status:"1"` on failure.
 
 **Output document**: `_bmad-output/implementation-artifacts/epic-{N}-retro-analysis-{date}.md`
@@ -28,12 +28,12 @@ Autonomous, CI-friendly skill that takes an epic Jira key, verifies all stories 
 
 Run:
 ```
-python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py sync-superrepo --repo-root .
+python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py sync-repo --repo-root .
 ```
 
-Pulls the latest super-repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
+Pulls the latest repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
 
-**HALT protocol (Phase 0 failure):** If exit code is non-zero, set `{blocker_summary}` to `"SYNC_FAILED: super-repo sync failed — branch may be behind or have conflicts"`, then post a Jira comment on `{epic_jira_key}` (Phase 4.5) and exit with `status:"1"`. Do NOT proceed to Phase 1.
+**HALT protocol (Phase 0 failure):** If exit code is non-zero, set `{blocker_summary}` to `"SYNC_FAILED: repo sync failed — branch may be behind or have conflicts"`, then post a GitHub Issues comment on `{epic_github-issues_key}` (Phase 4.5) and exit with `status:"1"`. Do NOT proceed to Phase 1.
 
 ---
 
@@ -44,7 +44,7 @@ Before any operations, verify the workspace is clean:
 git status --porcelain
 ```
 
-If `.log` files appear at repo root OR unexpected `modules/*` modifications appear → set `{blocker_summary}` = `"WORKSPACE_DIRTY: unexpected pre-existing dirty state — <list of dirty paths>"`, post Jira comment, exit `status:"1"`.
+If `.log` files appear at repo root OR unexpected `modules/*` modifications appear → set `{blocker_summary}` = `"WORKSPACE_DIRTY: unexpected pre-existing dirty state — <list of dirty paths>"`, post GitHub Issues comment, exit `status:"1"`.
 
 **YOLO mode**: Never ask the user — classify automatically and either continue or halt.
 
@@ -55,7 +55,7 @@ If `.log` files appear at repo root OR unexpected `modules/*` modifications appe
 Run:
 ```
 python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py resolve-epic \
-  --jira-key {epic_jira_key} --repo-root .
+  --story-key {epic_github-issues_key} --repo-root .
 ```
 
 Capture JSON output as session variables: `{epic_bmad_id}`, `{epic_title}`, `{epic_slug}`, `{story_file_paths}` (list), `{analysis_file}`, `{prev_retro_path}` (may be null), `{next_epic_bmad_id}` (may be null), `{implementation_artifacts}`.
@@ -65,9 +65,9 @@ Capture JSON output as session variables: `{epic_bmad_id}`, `{epic_title}`, `{ep
 | Error | Condition | Action |
 |-------|-----------|--------|
 | `ANALYSIS_ALREADY_EXISTS` | JSON contains `"action":"ANALYSIS_ALREADY_EXISTS"` | Emit sentinel with `status:"0"` immediately — idempotent exit. No further phases needed. |
-| `EPIC_NOT_COMPLETE` | Exit code non-zero, error contains EPIC_NOT_COMPLETE | Set `{blocker_summary}`, post Phase 4.5 Jira comment on `{epic_jira_key}`, exit `status:"1"` |
-| `KEY_NOT_FOUND` | Exit code non-zero, error contains KEY_NOT_FOUND | Set `{blocker_summary}`, post Phase 4.5 Jira comment, exit `status:"1"` |
-| `SPRINT_STATUS_MISSING` | Exit code non-zero, error contains SPRINT_STATUS_MISSING | Set `{blocker_summary}`, post Phase 4.5 Jira comment, exit `status:"1"` |
+| `EPIC_NOT_COMPLETE` | Exit code non-zero, error contains EPIC_NOT_COMPLETE | Set `{blocker_summary}`, post Phase 4.5 GitHub Issues comment on `{epic_github-issues_key}`, exit `status:"1"` |
+| `KEY_NOT_FOUND` | Exit code non-zero, error contains KEY_NOT_FOUND | Set `{blocker_summary}`, post Phase 4.5 GitHub Issues comment, exit `status:"1"` |
+| `SPRINT_STATUS_MISSING` | Exit code non-zero, error contains SPRINT_STATUS_MISSING | Set `{blocker_summary}`, post Phase 4.5 GitHub Issues comment, exit `status:"1"` |
 
 ---
 
@@ -103,7 +103,7 @@ For each file path in `{story_file_paths}`:
    - `### Senior Developer Review (AI)` (AI code review findings)
    - `### Human Code Review` (human reviewer feedback)
    - `### Technical Debt` (or debt items listed in action items)
-3. Collect per story: title, jira_key, key wins (things that went well), struggles/blockers, AI review findings (CRITICAL/HIGH/MEDIUM issues), human review themes, debt items.
+3. Collect per story: title, github-issues_key, key wins (things that went well), struggles/blockers, AI review findings (CRITICAL/HIGH/MEDIUM issues), human review themes, debt items.
 
 ### 3.3 Synthesize Cross-Story Patterns
 
@@ -146,7 +146,7 @@ Write the pre-analysis brief to `{analysis_file}`:
 
 # Epic {epic_bmad_id} Retrospective Pre-Analysis
 **Epic**: {epic_title}
-**Jira Key**: {epic_jira_key}
+**GitHub Issues Key**: {epic_github-issues_key}
 **Generated**: {current_date}
 **Stories Analysed**: {count}
 
@@ -157,7 +157,7 @@ Write the pre-analysis brief to `{analysis_file}`:
 | Metric | Value |
 |--------|-------|
 | Stories completed | {count} |
-| Story keys | {comma-separated jira keys} |
+| Story keys | {comma-separated story keys} |
 | AI review issues (CRITICAL) | {total across all stories} |
 | AI review issues (HIGH) | {total across all stories} |
 | AI review issues (MEDIUM) | {total across all stories} |
@@ -220,8 +220,8 @@ If writing fails, set `{blocker_summary}` to `"WRITE_FAILED: could not write ana
 
 Run:
 ```
-python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py commit-superrepo \
-  --epic-bmad-id {epic_bmad_id} --jira-key {epic_jira_key} \
+python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py commit-repo \
+  --epic-bmad-id {epic_bmad_id} --story-key {epic_github-issues_key} \
   --title "{epic_title}" --repo-root .
 ```
 
@@ -229,7 +229,7 @@ Stages only `_bmad-output/` (never `modules/*`), commits, pushes with retry. Cap
 
 ---
 
-## Phase 4.5: Post Jira Comment on Epic (Best-Effort)
+## Phase 4.5: Post GitHub Issues Comment on Epic (Best-Effort)
 
 **Always runs**. Non-fatal on failure.
 
@@ -237,15 +237,15 @@ Stages only `_bmad-output/` (never `modules/*`), commits, pushes with retry. Cap
 
 Run:
 ```
-python3 .claude/skills/jira-agile/scripts/jira_agile.py add-comment {epic_jira_key} \
+python3 .claude/skills/github-issues-agile/scripts/github-issues_agile.py add-comment {epic_github-issues_key} \
   --format markdown --body-stdin <<'EOF'
 ### ✅ AI Retro Pre-Analysis complete
 
-- Epic: `{epic_jira_key}` — {epic_title}
+- Epic: `{epic_github-issues_key}` — {epic_title}
 - Stories analysed: {count}
 - Analysis file: `{analysis_file}`
 
-The pre-analysis brief is available as a Jira attachment. Use it as pre-read before the facilitated retrospective session (`/retrospective epic={epic_bmad_id}`).
+The pre-analysis brief is available as a GitHub Issues attachment. Use it as pre-read before the facilitated retrospective session (`/retrospective epic={epic_bmad_id}`).
 EOF
 ```
 
@@ -253,7 +253,7 @@ EOF
 
 Run:
 ```
-python3 .claude/skills/jira-agile/scripts/jira_agile.py add-comment {epic_jira_key} \
+python3 .claude/skills/github-issues-agile/scripts/github-issues_agile.py add-comment {epic_github-issues_key} \
   --format markdown --body-stdin <<'EOF'
 ### ⚠️ AI Retro Pre-Analysis blocked
 
@@ -261,25 +261,25 @@ The automated retro pre-analysis could not complete.
 
 **Blocker**: {blocker_summary}
 
-Resolve the blocker and re-run the `aiRetroAnalysis` pipeline with `EPIC_JIRA_KEY={epic_jira_key}`.
+Resolve the blocker and re-run the `aiRetroAnalysis` pipeline with `EPIC_GitHub Issues_KEY={epic_github-issues_key}`.
 EOF
 ```
 
-On failure to post: log warning and continue. Never fail the pipeline due to Jira comment failure.
+On failure to post: log warning and continue. Never fail the pipeline due to GitHub Issues comment failure.
 
 ---
 
-## Phase 4.6: Attach Analysis Document to Jira Epic (Best-Effort)
+## Phase 4.6: Attach Analysis Document to GitHub Issues Epic (Best-Effort)
 
 **Skip if `{blocker_summary}` is non-empty** (no analysis file was written).
 
 Run:
 ```
 python3 .claude/skills/zone-code-review/scripts/zone_review.py attach-story \
-  --jira-key {epic_jira_key} --story-file {analysis_file} --repo-root .
+  --story-key {epic_github-issues_key} --story-file {analysis_file} --repo-root .
 ```
 
-Attaches the analysis file to the epic Jira issue. Non-fatal on failure.
+Attaches the analysis file to the epic story. Non-fatal on failure.
 
 ---
 
@@ -295,8 +295,8 @@ Sets `epic-{N}-retro-analysis: done` in `sprint-status.yaml`. Then commit and pu
 
 Run:
 ```
-python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py commit-superrepo \
-  --epic-bmad-id {epic_bmad_id} --jira-key {epic_jira_key} \
+python3 .claude/skills/zone-retrospective/scripts/zone_retrospective.py commit-repo \
+  --epic-bmad-id {epic_bmad_id} --story-key {epic_github-issues_key} \
   --title "{epic_title}" --repo-root .
 ```
 
@@ -304,12 +304,12 @@ Non-fatal if the sprint-status update fails — the analysis file already exists
 
 ---
 
-## Phase 5.5: Jira Transition (Best-Effort)
+## Phase 5.5: GitHub Issues Transition (Best-Effort)
 
 Run (non-fatal, degrade gracefully):
 ```
-python3 .claude/skills/zone-prepare-story/scripts/zone_prepare_story.py transition-jira \
-  --jira-key {epic_jira_key} --skill zone-retrospective \
+python3 .claude/skills/zone-prepare-story/scripts/zone_prepare_story.py transition-github-issues \
+  --story-key {epic_github-issues_key} --skill zone-retrospective \
   --outcome {outcome} --repo-root .
 ```
 
@@ -323,7 +323,7 @@ Always proceed to Phase 6 regardless of outcome.
 
 Emit the terminal sentinel line to stdout:
 ```
-###ZONE-RETRO-RESULT###{"status":"<0|1>","epic_key":"{epic_jira_key}","analysis_file":"{analysis_file}"}###ZONE-RETRO-RESULT###
+###ZONE-RETRO-RESULT###{"status":"<0|1>","epic_key":"{epic_github-issues_key}","analysis_file":"{analysis_file}"}###ZONE-RETRO-RESULT###
 ```
 
 `status:"0"` = success (analysis complete or already existed); `status:"1"` = blocked/failed.
@@ -336,14 +336,14 @@ Emit the terminal sentinel line to stdout:
 |------|--------|
 | YOLO mode | All decisions automated — zero user interaction |
 | No workflow.xml | Phase 3 drives analysis directly — NEVER invoke BMAD workflow engine or instructions.md |
-| No submodule checkout | All artifacts live in super-repo `_bmad-output/`; never touch `modules/` |
+| No module checkout | All artifacts live in repo `_bmad-output/`; never touch `modules/` |
 | Super-repo staging | NEVER `git add` any `modules/*` paths — only `_bmad-output/` artifacts |
 | ANALYSIS_ALREADY_EXISTS | Exit immediately with `status:"0"` — idempotent across retries |
-| EPIC_NOT_COMPLETE | Hard blocker — post Jira comment, exit `status:"1"` |
+| EPIC_NOT_COMPLETE | Hard blocker — post GitHub Issues comment, exit `status:"1"` |
 | Document header | MUST include `> Auto-Generated Pre-Analysis Brief — Not a Final Retrospective` |
 | ruamel.yaml | Used for sprint-status.yaml edits to preserve STATUS DEFINITIONS comment block |
-| Phase 4.5/4.6 | Non-fatal — Jira failures never fail the pipeline |
-| Commit message | Format: `{jira_key}: {epic_title} - retro analysis complete` |
+| Phase 4.5/4.6 | Non-fatal — GitHub Issues failures never fail the pipeline |
+| Commit message | Format: `{github-issues_key}: {epic_title} - retro analysis complete` |
 | SKILL_MAX_ATTEMPTS=1 | Retries would just hit ANALYSIS_ALREADY_EXISTS — always use 1 attempt |
 | Mode 2 unchanged | `/retrospective` command runs unmodified via existing BMAD workflow — this skill is Mode 1 only |
 
@@ -354,7 +354,7 @@ Emit the terminal sentinel line to stdout:
 | Purpose | Path |
 |---------|------|
 | Automation script | `.claude/skills/zone-retrospective/scripts/zone_retrospective.py` |
-| Jira key map | `_bmad-output/implementation-artifacts/jira-key-map.yaml` |
+| story key map | `_bmad-output/implementation-artifacts/story-key-map.yaml` |
 | Sprint status | `_bmad-output/implementation-artifacts/sprint-status.yaml` |
 | Story files | `_bmad-output/implementation-artifacts/stories/{story_key}.md` |
 | Analysis output | `_bmad-output/implementation-artifacts/epic-{N}-retro-analysis-{date}.md` |
@@ -362,5 +362,5 @@ Emit the terminal sentinel line to stdout:
 | SM persona | `_bmad/bmm/agents/sm.md` |
 | Workflow transitions | `.claude/skills/_common/workflow-transitions.yaml` |
 | Attach script | `.claude/skills/zone-code-review/scripts/zone_review.py` |
-| Jira agile script | `.claude/skills/jira-agile/scripts/jira_agile.py` |
+| GitHub Issues agile script | `.claude/skills/github-issues-agile/scripts/github-issues_agile.py` |
 | Transition script | `.claude/skills/zone-prepare-story/scripts/zone_prepare_story.py` |

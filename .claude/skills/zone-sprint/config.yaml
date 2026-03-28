@@ -2,7 +2,7 @@ sprint:
   # If omitted or null, zone-sprint asks at runtime.
   target_story_points: null
   duration_days: 14
-  # Jira sprint name must be <=30 chars
+  # GitHub Issues sprint name must be <=30 chars
   name_template: "Sprint {index} {start_date}"
   goal_template: null
 
@@ -14,11 +14,11 @@ planning:
   # When set, planner uses these instead of keyword heuristic. Override with --estimates-file.
   estimates_file: "{project-root}/_bmad-output/implementation-artifacts/story-estimates.yaml"
 
-jira:
+github-issues:
   project_key: "CLSDLC"
   board_id: 463
   auto_discover_board: false
-  mapping_file: "{project-root}/_bmad-output/implementation-artifacts/jira-key-map.yaml"
+  mapping_file: "{project-root}/_bmad-output/implementation-artifacts/story-key-map.yaml"
   require_tools: true
 
 execution:

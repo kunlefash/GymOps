@@ -1,21 +1,21 @@
 ---
 name: zone-epics
-description: Activates BMAD PM, Architect, and Scrum Master personas to run create-epics-and-stories, check-implementation-readiness, and sprint-planning, then pushes epics and stories to Jira backlog via Atlassian MCP and persists reusable Jira key mappings across project keys. Use when running Zone Agentic SDLC epic/story planning and syncing outcomes to Jira.
+description: Activates BMAD PM, Architect, and Scrum Master personas to run create-epics-and-stories, check-implementation-readiness, and sprint-planning, then pushes epics and stories to GitHub Issues backlog via Atlassian MCP and persists reusable story key mappings across project keys. Use when running Zone Agentic SDLC epic/story planning and syncing outcomes to GitHub Issues.
 ---
 
 # Zone Epics
 
-Run the BMAD epic lifecycle under the correct personas, then create or update Jira backlog items and persist stable mappings for later reuse.
+Run the BMAD epic lifecycle under the correct personas, then create or update GitHub Issues backlog items and persist stable mappings for later reuse.
 
 ## Phase 0: Sync Super-Repo
 
 Run:
 ```
-python3 .claude/skills/zone-dev/scripts/zone_dev.py sync-superrepo --repo-root .
+python3 .claude/skills/zone-dev/scripts/zone_dev.py sync-repo --repo-root .
 ```
 
-Pulls the latest super-repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
-**On failure:** Stop and inform the user that the super-repo sync failed — the branch may be behind or have unresolved conflicts. The user must resolve these manually before re-running this skill.
+Pulls the latest repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
+**On failure:** Stop and inform the user that the repo sync failed — the branch may be behind or have unresolved conflicts. The user must resolve these manually before re-running this skill.
 
 ---
 
@@ -79,7 +79,7 @@ After sprint-status.yaml is generated, suggest an initiative to group related ep
 initiatives:
   - title: "PostgreSQL Migration"    # user-confirmed title
     branch: "agent/initiative/postgresql-migration"  # derived: agent/initiative/{slugify(title)}
-    epics:                           # list of epic bmad_id + title (NOT jira keys)
+    epics:                           # list of epic bmad_id + title (NOT story keys)
       - id: "1"
         title: "Database Abstraction Foundation"
       - id: "2"
@@ -90,26 +90,26 @@ initiatives:
 
 5. If the user declines or skips, proceed to Phase 4 without adding the initiatives section.
 
-## Phase 4: Jira Backlog Sync via Atlassian MCP
+## Phase 4: GitHub Issues Backlog Sync via Atlassian MCP
 
 Execute this only after phases 1-3 complete.
 
 ### 4.1 Load Skill Config
 
 Read `config.yaml` from this skill directory and resolve:
-- `jira.atlassian_server`
-- `jira.project_key`
-- `jira.project_key_derivation`
-- `jira.epic_issue_type`
-- `jira.story_issue_type`
-- `jira.upsert_strategy`
-- `jira.mapping_file`
-- `jira.mapping_strategy`
-- `jira.persist_urls`
-- `jira.include_readiness_context`
-- `jira.include_sprint_context`
-- `jira.require_acceptance_criteria`
-- `jira.embed_references_inline`
+- `github-issues.atlassian_server`
+- `github-issues.project_key`
+- `github-issues.project_key_derivation`
+- `github-issues.epic_issue_type`
+- `github-issues.story_issue_type`
+- `github-issues.upsert_strategy`
+- `github-issues.mapping_file`
+- `github-issues.mapping_strategy`
+- `github-issues.persist_urls`
+- `github-issues.include_readiness_context`
+- `github-issues.include_sprint_context`
+- `github-issues.require_acceptance_criteria`
+- `github-issues.embed_references_inline`
 
 ### 4.2 Resolve Required Artifacts
 
@@ -126,24 +126,24 @@ Resolve files:
 
 If epics source is missing, stop and report error.
 
-### 4.3 Formulate and Confirm Jira Project Key (Mandatory)
+### 4.3 Formulate and Confirm GitHub Issues Project Key (Mandatory)
 
 1. Formulate suggestion:
-- If `jira.project_key_derivation` is true, derive from `project_name` by uppercasing and removing non-alphanumeric characters.
-- If derived result is empty, fall back to `jira.project_key` from config.
-2. Present the resolved key to user and require confirmation or override before any Jira write.
-3. If user declines, stop Jira sync.
+- If `github-issues.project_key_derivation` is true, derive from `project_name` by uppercasing and removing non-alphanumeric characters.
+- If derived result is empty, fall back to `github-issues.project_key` from config.
+2. Present the resolved key to user and require confirmation or override before any GitHub Issues write.
+3. If user declines, stop GitHub Issues sync.
 
 ### 4.4 Resolve Atlassian Cloud Context
 
-Using MCP server `jira.atlassian_server`:
+Using MCP server `github-issues.atlassian_server`:
 1. Call `getAccessibleAtlassianResources` and extract `cloudId`.
-2. Resolve Jira project by confirmed key. If exact API names differ, map tools by capability and use the one that returns project metadata by key.
+2. Resolve GitHub Issues project by confirmed key. If exact API names differ, map tools by capability and use the one that returns project metadata by key.
 3. Stop with explicit error if project key is not found.
 
-### 4.5 Resolve Jira Operation Methods by Capability
+### 4.5 Resolve GitHub Issues Operation Methods by Capability
 
-Atlassian MCP tool names can vary. Before Jira writes, resolve methods for these capabilities:
+Atlassian MCP tool names can vary. Before GitHub Issues writes, resolve methods for these capabilities:
 - Search issues in a project by exact summary and issue type.
 - Create issue.
 - Update issue.
@@ -151,7 +151,7 @@ Atlassian MCP tool names can vary. Before Jira writes, resolve methods for these
 - Link story to epic (parent/epic link model).
 
 Preferred operation mapping:
-1. Use direct Jira methods if present.
+1. Use direct GitHub Issues methods if present.
 2. If names differ, choose tools that provide equivalent behavior.
 3. Validate each chosen method with one lightweight read operation before bulk writes.
 
@@ -172,15 +172,15 @@ For each epic/story extract:
 Acceptance criteria extraction rules:
 1. If an "Acceptance Criteria" section exists under item, capture all bullets/numbered criteria.
 2. Otherwise, infer criteria-like bullet list under the item body.
-3. If none found and `jira.require_acceptance_criteria` is true:
+3. If none found and `github-issues.require_acceptance_criteria` is true:
 - stop that item from syncing,
 - prompt user to provide acceptance criteria text,
-- resume Jira sync only after criteria are provided and embedded.
-4. Do not use placeholder acceptance criteria for Jira payloads when strict mode is enabled.
+- resume GitHub Issues sync only after criteria are provided and embedded.
+4. Do not use placeholder acceptance criteria for GitHub Issues payloads when strict mode is enabled.
 
 Reference extraction and embedding rules:
-1. Detect explicit references in epic/story text (URLs, Confluence/Jira links, relative doc paths, \"see section\" references, requirement IDs).
-2. Resolve each reference into inline summary text that can stand alone in Jira.
+1. Detect explicit references in epic/story text (URLs, planning-artifacts/GitHub Issues links, relative doc paths, \"see section\" references, requirement IDs).
+2. Resolve each reference into inline summary text that can stand alone in GitHub Issues.
 3. Keep original links only as optional traceability metadata; never rely on links alone.
 4. If a reference cannot be resolved to meaningful inline content, ask the user for a short reference summary before syncing that item.
 
@@ -188,7 +188,7 @@ Also collect optional context:
 - Readiness snippets relevant to each BMAD ID from latest readiness report.
 - Sprint snippets relevant to each BMAD ID from `sprint-status.yaml`.
 
-### 4.7 Build Jira Payloads
+### 4.7 Build GitHub Issues Payloads
 
 Use deterministic summaries to support stable upsert:
 - Epic summary: `Epic <n>: <title>`.
@@ -224,14 +224,14 @@ Description template for epics and stories:
 
 Story linking rules:
 1. Create or update parent epic first.
-2. Link story to parent epic using supported Jira model:
+2. Link story to parent epic using supported GitHub Issues model:
 - Prefer parent relationship if available.
 - Fallback to epic-link field if required by project type.
 3. Apply the same mandatory description structure to both Epics and Stories.
 
-### 4.7b Commit Workflow Artifacts (Mandatory Before Jira Writes)
+### 4.7b Commit Workflow Artifacts (Mandatory Before GitHub Issues Writes)
 
-Execute this step before any Jira create/update operations.
+Execute this step before any GitHub Issues create/update operations.
 
 1. Stage the following files (resolve paths from BMAD config):
    - `{planning_artifacts}/epics.md` (or equivalent `*epic*.md` if used)
@@ -241,11 +241,11 @@ Execute this step before any Jira create/update operations.
 2. Run:
    ```bash
    python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning \
-     --message "chore(bmad): persist epic/story planning artifacts before Jira sync" --repo-root .
+     --message "chore(bmad): persist epic/story planning artifacts before GitHub Issues sync" --repo-root .
    ```
    Stages all `_bmad-output/` changes (excludes `modules/`), commits, and pushes with retry. Skips automatically if no changes exist.
 
-3. Do not commit `jira-key-map.yaml` in this step; it is written in 4.9 after Jira upsert.
+3. Do not commit `story-key-map.yaml` in this step; it is written in 4.9 after GitHub Issues upsert.
 
 ### 4.8 Upsert Algorithm (Create/Update)
 
@@ -267,7 +267,7 @@ For each item in order (epics first, then stories):
 - Any detected references are embedded in `Embedded References (Copied In)` as inline text.
 - If validation fails, do not write the item; ask user for missing content.
 
-4. Capture resulting Jira key and URL.
+4. Capture resulting story key and URL.
 
 5. Ensure story parent link points to the resolved epic key in the same project namespace.
 
@@ -275,32 +275,32 @@ For each item in order (epics first, then stories):
 
 Do not modify `sprint-status.yaml`.
 
-Write mapping to `{implementation_artifacts}/jira-key-map.yaml`.
+Write mapping to `{implementation_artifacts}/story-key-map.yaml`.
 
 File schema:
 
 ```yaml
 generated_at: "2026-02-19T00:00:00Z"
-active_project_key: "ZONEPAY"
+active_project_key: "GYMOPS"
 projects:
-  ZONEPAY:
+  GYMOPS:
     last_synced_at: "2026-02-19T00:00:00Z"
     source_epics_file: "_bmad-output/planning-artifacts/epics.md"
     items:
       - bmad_type: epic
         bmad_id: "1"
         bmad_title: "Merchant Onboarding"
-        jira_key: "ZONEPAY-101"
-        jira_issue_type: "Epic"
-        jira_url: "https://.../browse/ZONEPAY-101"
+        github-issues_key: "GYMOPS-101"
+        github-issues_issue_type: "Epic"
+        github-issues_url: "https://.../browse/GYMOPS-101"
       - bmad_type: story
         bmad_id: "1.1"
         bmad_title: "KYC validation flow"
-        jira_key: "ZONEPAY-102"
-        jira_issue_type: "Story"
-        jira_url: "https://.../browse/ZONEPAY-102"
+        github-issues_key: "GYMOPS-102"
+        github-issues_issue_type: "Story"
+        github-issues_url: "https://.../browse/GYMOPS-102"
         parent_bmad_id: "1"
-        parent_jira_key: "ZONEPAY-101"
+        parent_github-issues_key: "GYMOPS-101"
 ```
 
 Merge and retention rules:
@@ -310,35 +310,35 @@ Merge and retention rules:
 4. If title changes but BMAD ID is same, update mapping record with latest title/key/url.
 5. Keep `active_project_key` equal to current confirmed project.
 
-### 4.9b Commit Jira Mapping (Mandatory After Sync)
+### 4.9b Commit GitHub Issues Mapping (Mandatory After Sync)
 
 Execute this step after 4.9 Persist Mapping Sidecar completes.
 
-1. Stage `{implementation_artifacts}/jira-key-map.yaml`.
+1. Stage `{implementation_artifacts}/story-key-map.yaml`.
 
 2. Run:
    ```bash
    python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning \
-     --message "chore(bmad): persist Jira key mapping after sync" --repo-root .
+     --message "chore(bmad): persist story key mapping after sync" --repo-root .
    ```
    Stages all `_bmad-output/` changes (excludes `modules/`), commits, and pushes with retry. Skips automatically if no changes exist.
 
 ### 4.10 Final Confirmation Output
 
 Report to user:
-- Confirmed Jira project key.
+- Confirmed GitHub Issues project key.
 - Count of epics created vs updated.
 - Count of stories created vs updated.
 - Mapping file path.
-- List of Jira keys grouped by epics and stories.
+- List of story keys grouped by epics and stories.
 
-### 4.11 Repair Mode for Existing Jira Items (Mandatory on Request)
+### 4.11 Repair Mode for Existing GitHub Issues Items (Mandatory on Request)
 
-Use this mode when the user asks to fix already-synced Jira items or when `jira.auto_repair_after_sync` is enabled.
+Use this mode when the user asks to fix already-synced GitHub Issues items or when `github-issues.auto_repair_after_sync` is enabled.
 
 Repair scope:
-- Epics and stories already present in Jira for the confirmed project key.
-- Prefer items from `jira-key-map.yaml` in `projects.<PROJECT_KEY>.items`.
+- Epics and stories already present in GitHub Issues for the confirmed project key.
+- Prefer items from `story-key-map.yaml` in `projects.<PROJECT_KEY>.items`.
 - If mapping entries are missing, discover candidates by exact-summary search using BMAD IDs/titles.
 
 Repair checks per issue:
@@ -351,7 +351,7 @@ Repair behavior:
 1. Rebuild canonical description from current BMAD sources (`epics.md` + readiness + sprint context).
 2. If acceptance criteria are missing in source and strict mode is enabled, prompt user for criteria and block update until provided.
 3. If references are detected but not resolvable to inline context, prompt user for short inline summaries and block update until provided.
-4. Update Jira issue description in place.
+4. Update story description in place.
 5. Record repaired item counts (epics/stories) in final report.
 
 Repair completion output:
@@ -362,12 +362,12 @@ Repair completion output:
 
 ## Failure Handling
 
-1. If Atlassian access/cloud ID fails: stop Jira sync with clear error.
-2. If Jira project key resolution fails: stop and ask user to provide a valid key.
+1. If Atlassian access/cloud ID fails: stop GitHub Issues sync with clear error.
+2. If GitHub Issues project key resolution fails: stop and ask user to provide a valid key.
 3. If epics source parse fails: stop and show offending heading patterns.
 4. If acceptance criteria are missing for an item and strict mode is enabled: stop syncing that item, collect missing criteria from user, then retry.
 5. If referenced materials are detected but not embedded inline: stop syncing that item until inline reference summaries are provided.
-6. If some Jira writes fail:
+6. If some GitHub Issues writes fail:
 - continue processing other items,
 - mark failed items in final report,
 - persist successful mappings only.
@@ -378,8 +378,8 @@ Repair completion output:
 
 - Maintain required BMAD persona for each workflow phase.
 - Follow BMAD workflow step sequencing exactly.
-- Require project-key confirmation before Jira writes.
-- Always include statement + acceptance criteria + embedded references in Jira descriptions for both epics and stories.
-- Do not rely on external references being accessible from Jira; copy relevant reference content directly into description.
-- In repair mode, enforce the same description contract for all discovered legacy Jira items in scope.
-- Keep `sprint-status.yaml` untouched; store Jira map in separate sidecar file.
+- Require project-key confirmation before GitHub Issues writes.
+- Always include statement + acceptance criteria + embedded references in GitHub Issues descriptions for both epics and stories.
+- Do not rely on external references being accessible from GitHub Issues; copy relevant reference content directly into description.
+- In repair mode, enforce the same description contract for all discovered legacy GitHub Issues items in scope.
+- Keep `sprint-status.yaml` untouched; store GitHub Issues map in separate sidecar file.

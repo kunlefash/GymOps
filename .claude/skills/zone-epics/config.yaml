@@ -1,5 +1,5 @@
-# Jira publish defaults for zone-epics skill
-jira:
+# GitHub Issues publish defaults for zone-epics skill
+github-issues:
   atlassian_server: "Atlassian"
   project_key: "CLSDLC"
   project_key_derivation: false
@@ -15,5 +15,5 @@ jira:
   auto_repair_after_sync: true
 
   mapping_strategy: "separate-sidecar"
-  mapping_file: "{implementation_artifacts}/jira-key-map.yaml"
+  mapping_file: "{implementation_artifacts}/story-key-map.yaml"
   persist_urls: true

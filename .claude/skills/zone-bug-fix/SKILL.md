@@ -1,6 +1,6 @@
 ---
 name: zone-bug-fix
-description: Captures bug requirements via BMAD quick-spec workflow, registers the bug in pipeline artifacts (epics.md, sprint-status.yaml, jira-key-map.yaml), creates a Jira Bug issue, and publishes the spec to Confluence. Bridges bug fixes into zone-prepare-story → zone-dev → zone-code-review without modifying downstream skills.
+description: Captures bug requirements via BMAD quick-spec workflow, registers the bug in pipeline artifacts (epics.md, sprint-status.yaml, story-key-map.yaml), creates a GitHub Issues Bug issue, and publishes the spec to planning-artifacts. Bridges bug fixes into zone-prepare-story → zone-dev → zone-code-review without modifying downstream skills.
 ---
 
 # Zone Bug Fix
@@ -23,11 +23,11 @@ Every `commit-planning` call in this skill **stages, commits, AND pushes to remo
 
 Run:
 ```
-python3 .claude/skills/zone-dev/scripts/zone_dev.py sync-superrepo --repo-root .
+python3 .claude/skills/zone-dev/scripts/zone_dev.py sync-repo --repo-root .
 ```
 
-Pulls the latest super-repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
-**On failure:** Stop and inform the user that the super-repo sync failed — the branch may be behind or have unresolved conflicts. The user must resolve these manually before re-running this skill.
+Pulls the latest repo branch (rebase with merge fallback) so all `_bmad-output/` artifacts are up to date before work begins.
+**On failure:** Stop and inform the user that the repo sync failed — the branch may be behind or have unresolved conflicts. The user must resolve these manually before re-running this skill.
 
 ---
 
@@ -56,7 +56,7 @@ When executing Step 1 (`step-01-understand.md`), inject these bug-specific modif
   - **Expected Behavior**: What should happen
   - **Actual Behavior**: What happens instead
   - **Severity**: Critical / High / Medium / Low
-  - **Affected Modules**: Which `modules/` submodules are involved (e.g., `zone.zonepay`, `zone.pggateway`)
+  - **Affected Modules**: Which `modules/` modules are involved (e.g., `zone.gymops`, `src/services`)
 - Frame the "requirement delta" as: current (buggy) state → expected (fixed) state
 - The investigation in Step 2 should focus on root cause analysis rather than feature design
 
@@ -172,31 +172,31 @@ python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning \
 
 ---
 
-## Phase 4: Jira Bug Creation
+## Phase 4: GitHub Issues Bug Creation
 
 ### 4.1: Load Skill Config
 
 Read `config.yaml` from this skill's directory and resolve:
-- `jira.atlassian_server`
-- `jira.project_key`
-- `jira.bug_issue_type`
-- `jira.upsert_strategy`
-- `jira.mapping_file`
-- `jira.require_acceptance_criteria`
-- `jira.embed_references_inline`
-- `jira.persist_urls`
+- `github-issues.atlassian_server`
+- `github-issues.project_key`
+- `github-issues.bug_issue_type`
+- `github-issues.upsert_strategy`
+- `github-issues.mapping_file`
+- `github-issues.require_acceptance_criteria`
+- `github-issues.embed_references_inline`
+- `github-issues.persist_urls`
 
-### 4.2: Confirm Jira Project Key
+### 4.2: Confirm GitHub Issues Project Key
 
-Present the resolved `jira.project_key` to the user and require confirmation or override before any Jira write. If the user declines, skip Jira creation and proceed to Phase 5.
+Present the resolved `github-issues.project_key` to the user and require confirmation or override before any GitHub Issues write. If the user declines, skip GitHub Issues creation and proceed to Phase 5.
 
 ### 4.3: Resolve Atlassian Cloud Context
 
-Using MCP server `jira.atlassian_server`:
+Using MCP server `github-issues.atlassian_server`:
 1. Call `getAccessibleAtlassianResources` and extract `cloudId`
-2. If access fails, stop Jira sync with clear error and proceed to Phase 5
+2. If access fails, stop GitHub Issues sync with clear error and proceed to Phase 5
 
-### 4.4: Create or Update Jira Bug Issue
+### 4.4: Create or Update GitHub Issues Bug Issue
 
 **Summary:** `Bug {bmad_id}: {title}`
 
@@ -234,17 +234,17 @@ Using MCP server `jira.atlassian_server`:
 ```
 
 **Upsert logic:**
-1. Search first via `searchJiraIssuesUsingJql`:
+1. Search first via `searchGitHub IssuesIssuesUsingJql`:
    ```
    project = "{project_key}" AND summary ~ "Bug {bmad_id}:" AND issuetype = "{bug_issue_type}"
    ```
 2. If found: update the existing issue
-3. If not found: create a new issue with issue type `jira.bug_issue_type`
-4. Capture resulting `{jira_key}` and `{jira_url}`
+3. If not found: create a new issue with issue type `github-issues.bug_issue_type`
+4. Capture resulting `{github-issues_key}` and `{github-issues_url}`
 
-### 4.5: Persist to jira-key-map.yaml
+### 4.5: Persist to story-key-map.yaml
 
-1. Resolve `{implementation_artifacts}/jira-key-map.yaml`
+1. Resolve `{implementation_artifacts}/story-key-map.yaml`
 2. If the file does not exist, create it (see Missing File Handling below)
 3. Load existing content
 
@@ -253,8 +253,8 @@ Using MCP server `jira.atlassian_server`:
 - bmad_type: epic
   bmad_id: "99"
   bmad_title: "Bug Fixes"
-  jira_key: ""
-  jira_issue_type: "Epic"
+  github-issues_key: ""
+  github-issues_issue_type: "Epic"
 ```
 
 **Add the bug story entry:**
@@ -262,10 +262,10 @@ Using MCP server `jira.atlassian_server`:
 - bmad_type: story
   bmad_id: "99.{N}"
   bmad_title: "{title}"
-  jira_key: "{jira_key}"
-  jira_issue_type: "Bug"
-  jira_url: "{jira_url}"
-  parent_jira_key: ""
+  github-issues_key: "{github-issues_key}"
+  github-issues_issue_type: "Bug"
+  github-issues_url: "{github-issues_url}"
+  parent_github-issues_key: ""
   parent_bmad_id: "99"
 ```
 
@@ -277,26 +277,26 @@ Merge rules:
 - Preserve entries for other project keys unchanged
 - Update `active_project_key` to the confirmed project key
 
-### 4.6: Commit Jira Mapping
+### 4.6: Commit GitHub Issues Mapping
 
 Run:
 ```bash
 python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning \
-  --message "chore(bugfix): persist Jira key mapping for {bmad_id}" --repo-root .
+  --message "chore(bugfix): persist story key mapping for {bmad_id}" --repo-root .
 ```
 
 ---
 
-## Phase 5: Confluence Publish
+## Phase 5: planning-artifacts Publish
 
 Identical pattern to zone-prd Phase 3 (sections 3.1–3.10).
 
 ### 5.0 Load Config
 
 Read `config.yaml` from this skill's directory to obtain:
-- `confluence.space_key` (default: `PMT`)
-- `confluence.parent_page_id` (optional)
-- `confluence.title_template` (resolve `{project_name}` from BMAD config)
+- `planning-artifacts.space_key` (default: `PMT`)
+- `planning-artifacts.parent_page_id` (optional)
+- `planning-artifacts.title_template` (resolve `{project_name}` from BMAD config)
 
 ### 5.1 Discover Artifacts and Confirm
 
@@ -308,7 +308,7 @@ Build a list of documents to publish, each with a derived title:
 |------------------|---------------|
 | `bugfix-{name}.md` | `"{project_name} - Bug Fix {humanized_name}"` (strip `bugfix-` prefix, replace hyphens with spaces, title-case) |
 
-**CRITICAL:** Before creating or updating any Confluence pages:
+**CRITICAL:** Before creating or updating any planning artifacts:
 
 1. Present the discovered files and their derived titles to the user
 2. Ask the user to confirm or override any titles
@@ -321,7 +321,7 @@ Call `getAccessibleAtlassianResources` via the Atlassian MCP (server: `Atlassian
 
 ### 5.3 Resolve Space ID
 
-Call `getConfluenceSpaces` with `cloudId` and `keys: ["<space_key>"]`. Extract the `spaceId` for the target space.
+Call `getplanning-artifactsSpaces` with `cloudId` and `keys: ["<space_key>"]`. Extract the `spaceId` for the target space.
 
 ### 5.4–5.6 For Each Output Document
 
@@ -337,7 +337,7 @@ Identify the **Bug Summary** section (heading contains "Bug Summary"). All other
 
 #### 5.5 Create or Update the Main Page
 
-Search for the main page via `searchConfluenceUsingCql`:
+Search for the main page via `searchplanning-artifactsUsingCql`:
 ```
 cql: title = "<derived_title>" AND space.key = "<space_key>" AND type = page
 ```
@@ -347,9 +347,9 @@ Build the main page body from three parts:
 2. The **Bug Summary** section content (include the H2 heading)
 3. A **Table of Contents** heading (`## Contents`) followed by a markdown bulleted list where each item links to a child page title
 
-**If a matching main page is found:** call `updateConfluencePage` with `pageId`, assembled body, `contentFormat: "markdown"`, and `versionMessage` with timestamp. Store `pageId` as `mainPageId`.
+**If a matching main page is found:** call `updateplanning-artifactsPage` with `pageId`, assembled body, `contentFormat: "markdown"`, and `versionMessage` with timestamp. Store `pageId` as `mainPageId`.
 
-**If not found:** call `createConfluencePage` with `spaceId`, `title`, assembled body, `contentFormat: "markdown"`, and optional `parentId` from config. Store the returned page ID as `mainPageId`.
+**If not found:** call `createplanning-artifactsPage` with `spaceId`, `title`, assembled body, `contentFormat: "markdown"`, and optional `parentId` from config. Store the returned page ID as `mainPageId`.
 
 #### 5.6 Create or Update Child Pages
 
@@ -357,12 +357,12 @@ For each remaining section (every H2 except Bug Summary), skip sections with emp
 
 For each section:
 
-1. **Search for existing child page** via `searchConfluenceUsingCql`:
+1. **Search for existing child page** via `searchplanning-artifactsUsingCql`:
    ```
    cql: ancestor = <mainPageId> AND title = "<Section Heading>" AND type = page
    ```
-2. **If found:** call `updateConfluencePage` with `pageId`, section markdown body, `contentFormat: "markdown"`, `versionMessage` with timestamp
-3. **If not found:** call `createConfluencePage` with:
+2. **If found:** call `updateplanning-artifactsPage` with `pageId`, section markdown body, `contentFormat: "markdown"`, `versionMessage` with timestamp
+3. **If not found:** call `createplanning-artifactsPage` with:
    - `spaceId`
    - `title`: the section heading as-is (e.g., "Steps to Reproduce") — no project name prefix
    - `body`: the section markdown content
@@ -373,17 +373,17 @@ For each section:
 
 Report all main page URLs and their child page URLs to the user for each published document.
 
-### 5.8 Tag Documents with Confluence Metadata
+### 5.8 Tag Documents with planning-artifacts Metadata
 
-After a successful Confluence publish, tag **each** published local document with Confluence space and page ID for easy retrieval:
+After a successful planning-artifacts publish, tag **each** published local document with planning-artifacts space and page ID for easy retrieval:
 
 For each published document:
 
-1. Ensure you have: `space_key` (from config), `mainPageId` (from 5.5 for this document), and the Confluence base URL
+1. Ensure you have: `space_key` (from config), `mainPageId` (from 5.5 for this document), and the planning-artifacts base URL
 2. Read the workflow output file and parse its existing YAML frontmatter
-3. Add or update a `confluence` block in the frontmatter:
+3. Add or update a `planning-artifacts` block in the frontmatter:
    ```yaml
-   confluence:
+   planning-artifacts:
      space_key: "<space_key>"
      main_page_id: "<mainPageId>"
      main_page_url: "<constructed_url>"
@@ -391,12 +391,12 @@ For each published document:
 4. Write the file back, preserving all existing frontmatter and body content
 5. If the user declined publishing (skipped 5.1), skip this step
 
-### 5.9 Commit Confluence Tagging Changes
+### 5.9 Commit planning-artifacts Tagging Changes
 
 If 5.8 was skipped (user declined publish), skip this step. Otherwise run:
 ```bash
 python3 .claude/skills/zone-dev/scripts/zone_dev.py commit-planning \
-  --message "docs(bugfix): add Confluence link metadata for {slug}" --repo-root .
+  --message "docs(bugfix): add planning-artifacts link metadata for {slug}" --repo-root .
 ```
 
 ---
@@ -413,20 +413,20 @@ Present a summary table to the user:
 | Tech Spec | `{implementation_artifacts}/tech-spec-{slug}.md` |
 | BMAD ID | `{bmad_id}` |
 | Story Key | `{story_key}` |
-| Jira Key | `{jira_key}` |
-| Jira URL | `{jira_url}` |
-| Confluence URL | `{confluence_main_page_url}` |
+| GitHub Issues Key | `{github-issues_key}` |
+| GitHub Issues URL | `{github-issues_url}` |
+| planning-artifacts URL | `{planning-artifacts_main_page_url}` |
 | Sprint Status | `{story_key}: backlog` |
 
 ### Next Steps
 
 ```
-1. Run `zone-prepare-story {jira_key}` → generates story file
-2. (Optional) Run `zone-qa {jira_key} --qa-mode atdd` → generates failing acceptance tests
-3. Run `zone-dev {jira_key}` → implements the fix
-4. (Optional) Run `zone-qa {jira_key} --qa-mode automation` → expands test coverage
-5. Run `zone-code-review {jira_key}` → reviews implementation
-6. Run `zone-test-review {jira_key}` → reviews test quality, creates PRs on PASS
+1. Run `zone-prepare-story {github-issues_key}` → generates story file
+2. (Optional) Run `zone-qa {github-issues_key} --qa-mode atdd` → generates failing acceptance tests
+3. Run `zone-dev {github-issues_key}` → implements the fix
+4. (Optional) Run `zone-qa {github-issues_key} --qa-mode automation` → expands test coverage
+5. Run `zone-code-review {github-issues_key}` → reviews implementation
+6. Run `zone-test-review {github-issues_key}` → reviews test quality, creates PRs on PASS
 ```
 
 ---
@@ -463,9 +463,9 @@ development_status:
   {story_key}: backlog
 ```
 
-### If `jira-key-map.yaml` does not exist
+### If `story-key-map.yaml` does not exist
 
-Create `{implementation_artifacts}/jira-key-map.yaml` with the full project structure:
+Create `{implementation_artifacts}/story-key-map.yaml` with the full project structure:
 
 ```yaml
 generated_at: "{iso_timestamp}"
@@ -478,15 +478,15 @@ projects:
       - bmad_type: epic
         bmad_id: "99"
         bmad_title: "Bug Fixes"
-        jira_key: ""
-        jira_issue_type: "Epic"
+        github-issues_key: ""
+        github-issues_issue_type: "Epic"
       - bmad_type: story
         bmad_id: "99.{N}"
         bmad_title: "{title}"
-        jira_key: "{jira_key}"
-        jira_issue_type: "Bug"
-        jira_url: "{jira_url}"
-        parent_jira_key: ""
+        github-issues_key: "{github-issues_key}"
+        github-issues_issue_type: "Bug"
+        github-issues_url: "{github-issues_url}"
+        parent_github-issues_key: ""
         parent_bmad_id: "99"
 ```
 
@@ -498,19 +498,19 @@ Create both `_bmad-output/planning-artifacts/` and `_bmad-output/implementation-
 
 ## Failure Handling
 
-1. If super-repo sync fails: stop and inform user
+1. If repo sync fails: stop and inform user
 2. If quick-spec workflow fails at any step: allow user to retry that step or abort
 3. If `epics.md` parsing fails (unexpected format): show the offending content and ask user how to proceed
-4. If Jira access fails: skip Jira creation, warn user, proceed to Confluence
-5. If Confluence publish fails: warn user, complete Phase 6 summary without Confluence URL
+4. If GitHub Issues access fails: skip GitHub Issues creation, warn user, proceed to planning-artifacts
+5. If planning-artifacts publish fails: warn user, complete Phase 6 summary without planning-artifacts URL
 6. If any `commit-planning` push fails after retries: halt and inform the user
 
 ## Guardrails
 
 - Follow BMAD workflow step sequencing exactly during Phase 2
-- Require Jira project key confirmation before any Jira writes
-- Always use `bmad_type: story` in jira-key-map.yaml for bug entries (never `bmad_type: bug`)
+- Require GitHub Issues project key confirmation before any GitHub Issues writes
+- Always use `bmad_type: story` in story-key-map.yaml for bug entries (never `bmad_type: bug`)
 - Always use numeric BMAD IDs under Epic 99 (`99.1`, `99.2`, etc.) for regex compatibility
 - Never modify existing epic/story entries in `epics.md` — only append under `## Epic 99:`
 - Never modify existing entries in `sprint-status.yaml` — only add new keys
-- Preserve all existing `jira-key-map.yaml` project namespaces when adding bug entries
+- Preserve all existing `story-key-map.yaml` project namespaces when adding bug entries

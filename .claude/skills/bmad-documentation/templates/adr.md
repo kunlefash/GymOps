@@ -2,8 +2,8 @@
 
 - **Status**: {Proposed | Accepted | Deprecated | Superseded by ADR-{NNNN}}
 - **Date**: {YYYY-MM-DD}
-- **Initiative**: {Jira epic key} — {initiative title}
-- **Modules Affected**: {comma-separated list, e.g. zone.framework, zonepay.settlement}
+- **Initiative**: {GitHub Issues epic key} — {initiative title}
+- **Modules Affected**: {comma-separated list, e.g. zone.framework, gymops.settlement}
 
 ## Context
 
@@ -29,7 +29,7 @@
 <!-- ============================================================
      COMPLIANCE NOTE
      Include this section only if Modules Affected contains any of:
-     zone.zonepay, zone.cardlesstransactionprocessing, zonepay.settlement,
+     zone.gymops, zone.cardlesstransactionprocessing, gymops.settlement,
      zone.pggateway, zonedc.settlement, zone.smartcontracts.sui,
      zone.settlement.sui, zone.admin.api (funding/liquidation paths).
      Delete this comment block and the section if not applicable.
