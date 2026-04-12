@@ -5,7 +5,7 @@
 
 
 # Core Configuration Values
-user_name: zonepay
+user_name: GymOps
 communication_language: English
 document_output_language: English
 output_folder: "{project-root}/_bmad-output"

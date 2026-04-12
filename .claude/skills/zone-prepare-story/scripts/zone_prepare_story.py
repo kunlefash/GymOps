@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                        #!/usr/bin/env python3
 """Deterministic automation for zone-prepare-story skill phases 1, 2, 2.7, 2.8, 4, 5, 5.5, 6."""
 
 from __future__ import annotations
@@ -898,7 +898,7 @@ def main() -> int:
 
     # resolve-nuget-deps
     p_nuget = subparsers.add_parser("resolve-nuget-deps", help="Phase 2.8: Resolve cross-repo NuGet dependencies")
-    p_nuget.add_argument("--modules", required=True, help="JSON array of module paths (e.g. modules/zone.zonepay)")
+    p_nuget.add_argument("--modules", required=True, help="JSON array of module paths (e.g. modules/gymops)")
     p_nuget.add_argument("--branch", default="", help="Current epic/feature branch name")
     p_nuget.add_argument("--initiative-branch", default="", help="Initiative/parent branch name (fallback)")
     p_nuget.add_argument("--repo-root", default=".", help="Repository root directory")
