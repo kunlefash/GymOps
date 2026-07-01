@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,6 +15,21 @@
   "description": "",
   "dependencies": {
     "@21st-sdk/agent": "^0.0.14",
+    "autoprefixer": "^10.5.0",
+    "clsx": "^2.1.1",
+    "next": "^15.5.15",
+    "postcss": "^8.5.10",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.2.2",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^26.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
   }
 }
