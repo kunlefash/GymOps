@@ -1,10 +1,73 @@
 ---
-stepsCompleted: [step-01-init, step-02-discovery, step-03-core-experience, step-04-emotional-response, step-05-inspiration, step-06-design-system, step-07-defining-experience, step-08-visual-foundation, step-09-design-directions, step-10-user-journeys, step-11-component-strategy, step-12-ux-patterns, step-13-responsive-accessibility, step-14-complete]
+stepsCompleted: [step-01-init, step-02-discovery, step-03-core-experience, step-04-emotional-response, step-05-inspiration, step-06-design-system, step-07-defining-experience, step-08-visual-foundation, step-08b-stitch-bootstrap, step-09-design-directions, step-10-user-journeys, step-11-component-strategy, step-12-ux-patterns, step-13-responsive-accessibility, step-14-complete]
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/product-brief-GymOps-2026-03-28.md
   - docs/FitBase_Product_Brief.md
   - _bmad/_memory/project-context.md
+stitch:
+  projectId: "8119848501120508360"
+  projectResourceName: "projects/8119848501120508360"
+  projectUrl: "https://stitch.withgoogle.com/project/8119848501120508360"
+  designSystemAssetId: "13546352521026478432"
+  seedScreenId: ""
+  chosenDirectionScreenId: ""
+  directionVariantScreenIds: []
+  journeyScreens:
+    journey-1-onboarding:
+      screen-01-phone-entry: "5ef10cd0825f4d01b4a2b5bd2deef3e4"
+      screen-02-otp-verification: "05fbc6b2318d4d80a4623cf5678a9269"
+      screen-03-business-type: "6cdc44bcdc2948e8a937053a7ac44e81"
+      screen-04-business-name: "f008927fcce441f292f0bbc7123a5204"
+      screen-05-team-size: "c95b2d2b34fc47d9905e93c103d4bda2"
+      screen-06-first-plan: "5262d96035ab4262915ae6b2b9cd7f81"
+      screen-07-gym-qr: "08ab86a275ae4f0ca2cd5a5a3555806b"
+      screen-08-staff-invite: "ff8b56c386f8460c98aa7785a78a3ade"   # "I have staff" branch only
+    # In-app transactional screens (not onboarding — first-use tasks from the dashboard)
+    in-app-payment-flow:
+      add-member: "5d86ea4bcdad4d88b97c1565e8ec30c7"
+      payment-drawer: "f376f6caa1f7493d9f795b6dca562459"  # original — deprecated
+      payment-drawer-revised: "f76d5e740d6d4db686ead1a08f75d46f"  # adds note field + walk-in check-in toggle (FR22, FR25)
+      payment-success: "1e62445a7ab8490192b8b1a5753ecaaf"
+    owner-bank-transfer-flow:
+      # Cash = staff's 3-tap job. Bank transfer = owner's reconciliation job.
+      # Member sees account + unique ref, taps "I've sent it", pending record created.
+      # Owner gets push/WhatsApp alert, confirms in Pending Payments → receipt fires, membership renews.
+      # No auto-activation — prevents fraud. Staff can grant provisional check-in as override.
+      #
+      # Bank account NOT collected during onboarding (per product decision: keep onboarding lean).
+      # Instead, Owner Dashboard shows a conditional banner when bank account is not configured:
+      #   "Add bank account to accept transfers →" — routes to owner-bank-account-settings.
+      # Banner disappears once account is configured. Cash-only gyms can ignore it.
+      owner-bank-account-settings: "1557624929594ae7ae723464d90738dd"
+      owner-dashboard-home: "22d17c43959c4a7598b94473708a27e1"
+      owner-pending-payments: "66999e4d1d6940609efbb4c0523728ef"
+      member-home-awaiting-confirmation: "cef4ac4e52b14ef1afeeaed0c89e7e32"
+      staff-member-profile-pending: "77279c6583404d108cca5b971308c70f"
+    journey-2-staff-shift:
+      # Nav revised: Home / Members / Activity / Settings (dropped Payments tab)
+      # "Check In Member" demoted from primary — QR self-scan is main path; staff check-in is fallback
+      staff-shift-home: "b1e983b69d0144d8b9c15d742a8e27c9"
+      members-list: "a9889fd3660b49e7ac4481d1c5b9c408"
+      member-detail: "67c8603a2b0849f9bc6d7da34b2b2298"
+      todays-activity-log: "c4436ae644fa4ee59904ca7c177c3f74"
+      settings: "dcddded151ca478fb05f5927394e47fc"
+    journey-member-qr-scan:
+      # QR scan flow: native camera → URL → deep-link PWA (if installed) or browser
+      qr-scan-recognized-member: "8cfe89fffd934707af0b10ffc6538bc5"
+      qr-scan-new-visitor-self-enroll: "a685736772e44bd5902a5285e09f1b7a"
+      member-login-different-device: "cd39cfb64f0d480b80491af4f571c1f6"  # contextual login for known member on unknown device
+      qr-checkin-success-with-install-prompt: "7a10b9915dcd4b67bec545b111c1fc60"
+      new-visitor-welcome-with-install-prompt: "4bbf812f06b549e1b96dee64f235d901"
+      expired-membership-scan-alert: "858f91517b83424084ece110606223fe"
+    journey-3-member-app:
+      # Member-facing PWA — distinct from staff app
+      member-home-active: "024fa7faad8a449998129007ac554487"  # revised (no scan button)
+      member-home-expiring-soon: "48723ac71dab4fd69615497a4545f1ae"
+      member-home-expired: "1fa8601a6af94d309ef7fc14f174c7d3"
+      member-payments-history: "f4ea05e1000d4dc2a2a2bb78afa845d7"
+      member-profile: "0a2c876678064c55a8fd098d1d1b6364"
+      # NOTE: old "2bdea0aa…" superseded — had outdated in-app Scan QR button
 ---
 
 # UX Design Specification FitBase (GymOps)
