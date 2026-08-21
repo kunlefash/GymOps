@@ -16,17 +16,23 @@ document_output_language: English
 output_folder: "{project-root}/_bmad-output"
 
 # GitHub Repositories
+# The app is a single Next.js monorepo (architecture.md → Starter Template Evaluation):
+# frontend and API routes deploy together on Vercel. There is no separate backend repo.
 github_owner: kunlefash
 github_repos:
-  orchestration: GymOps
-  frontend: gymops-frontend
-  backend: gymops-backend
+  orchestration: GymOps # BMAD framework, planning artifacts, stories, sprint tracking
+  app: fitbase # All application source — UI, API routes, Prisma schema, tests
 github_integration: "{project-root}/_bmad/_config/github-integration.yaml"
 
 # Tech Stack
 tech_stack:
-  frontend: "Next.js 15, TypeScript strict, Tailwind CSS, React"
-  backend: "Node.js, Express, TypeScript, Prisma ORM"
-  database: "PostgreSQL"
+  app: "Next.js 16 App Router, React 19, TypeScript strict, Tailwind CSS 4"
+  api: "Next.js API Routes (Vercel serverless), Prisma 7"
+  database: "PostgreSQL (Neon serverless)"
+  auth: "Phone + WhatsApp OTP via Termii, JWT in httpOnly cookies (jose)"
+  state: "TanStack Query v5, Zustand v5, React Hook Form + Zod"
+  pwa: "Serwist service worker"
   deployment: "Vercel"
+  monitoring: "Sentry, Vercel Analytics"
   testing: "Jest, React Testing Library, Playwright"
+  runtime: "Node 22, pnpm 11"
