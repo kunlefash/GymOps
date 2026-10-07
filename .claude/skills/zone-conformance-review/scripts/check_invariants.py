@@ -121,7 +121,10 @@ RULES: list[Rule] = [
             "later ships unprotected because nothing forces the author to repeat it."
         ),
         fix="Move the guard to the route group's layout.tsx.",
-        pattern=re.compile(r"getServerSession|hasRole\s*\("),
+        # A role check or a bounce to /login is a guard. Merely reading the
+        # session to get an id is a data access and belongs in a page — the
+        # earlier, broader pattern flagged every such page as a violation.
+        pattern=re.compile(r"""hasRole\s*\(|redirect\(\s*['"]/login"""),
         applies_to=re.compile(r"src/app/.*/page\.tsx$"),
     ),
     Rule(
