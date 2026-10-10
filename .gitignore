@@ -44,3 +44,9 @@ yarn-error.log*
 *.pem
 *.key
 credentials.json
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Claude Code agent worktrees — live git worktrees, never content to commit
+.claude/worktrees/

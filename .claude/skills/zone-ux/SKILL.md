@@ -44,8 +44,18 @@ Key persona attributes to maintain throughout all phases:
 2. Obey all step-file architecture rules: micro-file design, just-in-time loading, sequential enforcement
 3. Never load multiple step files simultaneously
 4. Halt at menus and wait for user input
-5. UX design output file: `{planning_artifacts}/ux-design-specification.md`
+5. UX design output files: `{planning_artifacts}/ux-design-specification.md` and `{planning_artifacts}/ux-stitch-artifacts.md` (written at step-14)
 6. Maintain the UX Designer persona throughout all workflow steps
+
+### Phase 2 Prerequisite: Stitch MCP
+
+Steps 08b, 09, 09b, 10, and 14 of the workflow invoke Google Stitch via the `mcp__stitch__*` tools (`create_project`, `create_design_system`, `update_design_system`, `generate_screen_from_text`, `generate_variants`, `edit_screens`, `list_screens`, `get_project`). Step 06b writes the local `.stitch/DESIGN.md` seed file (no MCP call). Stitch is the canonical visual source of truth — HTML mockup generation has been removed from the flow.
+
+Before invoking Phase 2:
+
+1. Confirm the Stitch MCP server is connected for this project. The expected configuration is an HTTP MCP entry pointing at `https://stitch.googleapis.com/mcp` with an `X-Goog-Api-Key` header. Keys belong in per-user config (`~/.claude.json` project `mcpServers` block), never in repo-committed files.
+2. If `mcp__stitch__create_project` is not available in the current session, halt and tell the user to configure the server and restart Claude Code.
+3. Stitch generation tools (`generate_screen_from_text`, `generate_variants`, `edit_screens`) take several minutes per call. Per the tool docs, **do not retry on connection errors** — call `list_screens` to check whether the operation succeeded despite the error.
 
 ## Phase 3: planning-artifacts Publish
 
@@ -76,9 +86,10 @@ Build a list of documents to publish, each with a derived title using pattern `"
 | Filename pattern | Derived title |
 |------------------|---------------|
 | `ux-design-specification.md` | `"{project_name} - UX Design"` (matches existing `title_template`) |
+| `ux-stitch-artifacts.md` | `"{project_name} - Stitch Artifacts"` — reference index of Stitch project, design system asset, and screen IDs |
 | Any other `ux-*.md` | Derive title from filename: strip `ux-` prefix, replace hyphens with spaces, title-case |
 
-> **HTML artifacts note:** HTML files (e.g., `ux-design-directions.html`, `ux-color-themes.html`) are **not** published — the Atlassian MCP lacks attachment/HTML upload support. These remain in the repo as local assets. TODO: publish when attachment API becomes available.
+> **Stitch note:** The Stitch project itself (`stitch.projectUrl`) is the canonical visual artifact and is hosted by Google, not published to Atlassian. `ux-stitch-artifacts.md` publishes only the reference IDs and URLs so Confluence readers can follow the link to the live Stitch renders. HTML mockup generation has been removed from the flow entirely.
 
 **CRITICAL:** Before creating or updating any planning artifacts:
 

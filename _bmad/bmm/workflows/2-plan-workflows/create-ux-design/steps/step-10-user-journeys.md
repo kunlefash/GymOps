@@ -40,11 +40,21 @@ This step will generate content and present choices:
 - Current document and frontmatter from previous steps are available
 - Design direction from step 9 informs flow layout and visual design
 - Core experience from step 7 defines key journey interactions
-- Focus on designing detailed user flows with Mermaid diagrams
+- Stitch project (`stitch.projectId`) and chosen direction screen (`stitch.chosenDirectionScreenId`) are live and will host journey screens
+- Focus on designing detailed user flows with Mermaid diagrams AND generating a Stitch screen per journey
+
+## PREFLIGHT: Verify Stitch Context
+
+Read `{planning_artifacts}/ux-design-specification.md` frontmatter. Confirm:
+- `stitch.projectId` is non-empty
+- `stitch.chosenDirectionScreenId` is non-empty
+
+If either is empty, halt with:
+"Stitch context is incomplete. Ensure step-08b ran and step-09 locked a chosen direction before re-running this step."
 
 ## YOUR TASK:
 
-Design detailed user journey flows for critical user interactions.
+Design detailed user journey flows for critical user interactions AND generate a Stitch screen per critical journey inside the existing Stitch project.
 
 ## USER JOURNEY FLOWS SEQUENCE:
 
@@ -118,6 +128,47 @@ For each journey, let's ensure we're:
 - [Optimization 2 for user delight]
 - [Optimization 3 for error handling]"
 
+### 4b. Generate Stitch Screens for Each Critical Journey
+
+For each critical journey identified in step 2, generate one Stitch screen representing the journey's primary destination / resolution state (NOT every step of the flow — one anchor screen per journey).
+
+For each journey:
+
+1. Compose a Stitch prompt grounded in:
+   - The journey's goal (from step 2)
+   - The content blocks the PRD actually specifies for this screen
+   - The chosen direction's aesthetic (reference: `stitch.chosenDirectionScreenId`)
+
+   Prompt shape:
+   ```
+   A [MOBILE|DESKTOP] [screen purpose] for [product type]. The user arrives here after [journey trigger]. They need to [primary task on this screen]. Key elements: [block 1], [block 2], [block 3]. Match the visual direction already established in this project — same layout density, color treatment, and interaction style as the other screens. No new features — only what the PRD specifies for this journey.
+   ```
+
+2. Confirm with user: "Send this prompt to Stitch for [Journey Name]? (send / adjust)"
+
+3. Call `mcp__stitch__generate_screen_from_text`:
+   ```json
+   {
+     "projectId": "<stitch.projectId>",
+     "deviceType": "<per journey — MOBILE/DESKTOP/TABLET/AGNOSTIC>",
+     "modelId": "GEMINI_3_1_PRO",
+     "prompt": "<composed prompt>"
+   }
+   ```
+
+4. Wait for completion (minutes). On connection error, **DO NOT RETRY**. Wait ~30s, then `mcp__stitch__list_screens` to find the new screen.
+
+5. Capture the screen ID. Update frontmatter `stitch.journeyScreens` (map of journey name → screen ID):
+   ```yaml
+   stitch:
+     journeyScreens:
+       "<Journey 1 name>": "<screenId>"
+       "<Journey 2 name>": "<screenId>"
+       "<Journey 3 name>": "<screenId>"
+   ```
+
+6. After all journey screens are generated, show the user the Stitch URLs and let them request refinements via `edit_screens` before proceeding.
+
 ### 5. Document Journey Patterns
 
 Extract reusable patterns across journeys:
@@ -156,9 +207,13 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 [Journey 1 description and Mermaid diagram]
 
+**Stitch screen:** `<stitch.projectUrl>/screens/<journey1ScreenId>` · Screen ID `<journey1ScreenId>`
+
 ### [Journey 2 Name]
 
 [Journey 2 description and Mermaid diagram]
+
+**Stitch screen:** `<stitch.projectUrl>/screens/<journey2ScreenId>` · Screen ID `<journey2ScreenId>`
 
 ### Journey Patterns
 
@@ -167,6 +222,14 @@ When saving to document, append these Level 2 and Level 3 sections:
 ### Flow Optimization Principles
 
 [Flow optimization principles based on conversation]
+
+### Stitch Screen Map
+
+| Journey | Device | Stitch Screen ID |
+|---------|--------|------------------|
+| [Journey 1] | [MOBILE/DESKTOP] | `<id>` |
+| [Journey 2] | [MOBILE/DESKTOP] | `<id>` |
+| [Journey 3] | [MOBILE/DESKTOP] | `<id>` |
 ```
 
 ### 7. Present Content and Menu
@@ -217,6 +280,9 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Detailed flow diagrams created for each journey
 ✅ Flows optimized for efficiency and user delight
 ✅ Common journey patterns extracted and documented
+✅ One Stitch screen generated per critical journey (anchor/destination state)
+✅ `stitch.journeyScreens` map populated in frontmatter
+✅ Stitch URLs + IDs included in the documented journey sections
 ✅ A/P/C menu presented and handled correctly
 ✅ Content properly appended to document when C selected
 
@@ -227,6 +293,10 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Missing error recovery paths
 ❌ Not extracting reusable patterns across journeys
 ❌ Flow diagrams unclear or incomplete
+❌ Generating multiple Stitch screens per journey (one anchor screen is the contract — flow diagrams carry step-by-step detail, not Stitch)
+❌ Retrying Stitch `generate_screen_from_text` on connection error (use `list_screens` recovery pattern)
+❌ Leaving `stitch.journeyScreens` empty or partial when proceeding
+❌ Generating screens without referencing the chosen direction's aesthetic (screens will drift from step-09's decision)
 ❌ Not presenting A/P/C menu after content generation
 ❌ Appending content without user selecting 'C'
 

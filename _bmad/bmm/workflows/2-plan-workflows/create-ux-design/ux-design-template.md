@@ -1,6 +1,15 @@
 ---
 stepsCompleted: []
 inputDocuments: []
+stitch:
+  projectId: ""
+  projectResourceName: ""
+  projectUrl: ""
+  designSystemAssetId: ""
+  seedScreenId: ""
+  chosenDirectionScreenId: ""
+  directionVariantScreenIds: []
+  journeyScreens: {}
 ---
 
 # UX Design Specification {{project_name}}

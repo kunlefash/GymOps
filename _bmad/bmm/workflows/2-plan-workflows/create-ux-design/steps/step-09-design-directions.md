@@ -1,224 +1,288 @@
-# Step 9: Design Direction Mockups
+# Step 9: Design Direction Variants (via Stitch)
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input
+- 🛑 NEVER proceed if `stitch.projectId` is empty in the spec frontmatter — step-08b must have run first
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
-- ✅ ALWAYS treat this as collaborative discovery between UX facilitator and stakeholder
-- 📋 YOU ARE A UX FACILITATOR, not a content generator
-- 💬 FOCUS on generating and evaluating design direction variations
-- 🎯 COLLABORATIVE exploration, not assumption-based design
-- ✅ YOU MUST ALWAYS SPEAK OUTPUT In your Agent communication style with the config `{communication_language}`
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action.
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding.
+- ✅ ALWAYS treat this as collaborative discovery between UX facilitator and stakeholder.
+- 📋 YOU ARE A UX FACILITATOR, not a content generator.
+- 🧰 Direction exploration happens **inside Stitch**. No HTML showcase is generated — Stitch URLs are the canonical artifact.
+- ⏳ `generate_screen_from_text` and `generate_variants` each take several minutes. Per Stitch docs: **DO NOT RETRY** on apparent failure — the operation may still succeed. Use `list_screens` to check.
+- ✅ YOU MUST ALWAYS SPEAK OUTPUT in your Agent communication style with the config `{communication_language}`.
 
 ## EXECUTION PROTOCOLS:
 
-- 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating design direction content
-- 💾 Generate HTML visualizer for design directions
-- 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🎯 Show the seed prompt and variant prompt before sending them to Stitch; get user confirmation.
+- ⚠️ Present A/P/C menu after the chosen direction is captured.
+- 💾 ONLY save when user chooses C.
+- 📖 Update output file frontmatter: append this step to stepsCompleted AND populate `stitch.seedScreenId`, `stitch.directionVariantScreenIds`, `stitch.chosenDirectionScreenId`.
+- 🚫 FORBIDDEN to load next step until C is selected.
 
 ## COLLABORATION MENUS (A/P/C):
 
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper design insights
-- **P (Party Mode)**: Bring multiple perspectives to evaluate design directions
-- **C (Continue)**: Save the content to the document and proceed to next step
+- **A (Adjust)**: Refine via `edit_screens` on the chosen direction, or regenerate variants with different `aspects` / `creativeRange`.
+- **P (Party Mode)**: Bring multiple perspectives to evaluate the Stitch-rendered variants.
+- **C (Continue)**: Lock the chosen direction and proceed.
 
 ## PROTOCOL INTEGRATION:
 
-- When 'A' selected: Read fully and follow: {project-root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
+- When 'A' selected: walk the adjustment path below (edit_screens OR regenerate variants).
 - When 'P' selected: Read fully and follow: {project-root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
-- User accepts/rejects protocol changes before proceeding
+- PROTOCOLS always return to this step's A/P/C menu.
 
 ## CONTEXT BOUNDARIES:
 
-- Current document and frontmatter from previous steps are available
-- Visual foundation from step 8 provides design tokens
-- Core experience from step 7 informs layout and interaction design
-- Focus on exploring different visual design directions
+- Visual foundation (step-08) provides the token intent.
+- Stitch design system (step-08b) is already registered on the Stitch project — all Stitch generations in this step will automatically pick up the design system.
+- Core experience (step-07) informs what the seed screen should depict.
+- Emotional goals (step-04) inform variant direction.
 
 ## YOUR TASK:
 
-Generate comprehensive design direction mockups showing different visual approaches for the product.
+Generate a **seed screen** + **5 variant screens** inside the Stitch project that together represent different design directions for {{project_name}}. Let the user pick (or combine) one direction to anchor all downstream work.
 
-## DESIGN DIRECTIONS SEQUENCE:
+## DESIGN DIRECTION SEQUENCE:
 
-### 1. Generate Design Direction Variations
+### 1. Preflight: Verify Stitch Context
 
-Create diverse visual explorations:
-"I'll generate 6-8 different design direction variations exploring:
+Read `{planning_artifacts}/ux-design-specification.md` frontmatter. Confirm:
+- `stitch.projectId` is non-empty
+- `stitch.designSystemAssetId` is non-empty
 
-- Different layout approaches and information hierarchy
-- Various interaction patterns and visual weights
-- Alternative color applications from our foundation
-- Different density and spacing approaches
-- Various navigation and component arrangements
+If either is empty, halt with:
+"The Stitch design system isn't bootstrapped yet. Run step-08b first."
 
-Each mockup will show a complete vision for {{project_name}} with all our design decisions applied."
+### 2. Compose the Seed Prompt
 
-### 2. Create HTML Design Direction Showcase
+Pick the **single most representative screen** for {{project_name}} based on step-07's core experience. Typical choices:
+- B2B / dashboard product → "Main dashboard / home view"
+- Consumer / transactional → "Primary task screen (e.g., checkout, booking, feed)"
+- Content product → "Content browse / feed"
 
-Generate interactive visual exploration:
-"🎨 Design Direction Mockups Generated!
+Draft a Stitch prompt that describes:
+- What the screen is (in one sentence)
+- The primary user task on this screen
+- The key content blocks (use the PRD / core experience to ground these — no invented features)
+- Tone anchored to step-04's emotional goals
 
-I'm creating a comprehensive HTML design direction showcase at `{planning_artifacts}/ux-design-directions.html`
+Keep the prompt under ~500 words. Example shape:
 
-**What you'll see:**
+```
+A mobile-first [screen name] for [product type]. The user opens this to [primary task]. Prominent elements: [block 1], [block 2], [block 3]. Secondary elements: [block 4], [block 5]. Tone: [emotional adjectives from step-04]. Surface the [most important metric / action] above the fold. No hypothetical features — only what appears in the PRD.
+```
 
-- 6-8 full-screen mockup variations
-- Interactive states and hover effects
-- Side-by-side comparison tools
-- Complete UI examples with real content
-- Responsive behavior demonstrations
+### 3. Confirm Prompt with User
 
-Each mockup represents a complete visual direction for your app's look and feel."
+Show the user the exact seed prompt and the device type you will send:
+```
+Seed screen prompt:
+  projectId: "<stitch.projectId>"
+  deviceType: <MOBILE|DESKTOP|TABLET|AGNOSTIC>
+  modelId: GEMINI_3_1_PRO
+  prompt: |
+    <prompt text>
+```
 
-### 3. Present Design Exploration Framework
+Ask: "Send to Stitch, or adjust first? (send / adjust)"
 
-Guide evaluation criteria:
-"As you explore the design directions, look for:
+### 4. Generate the Seed Screen
 
-✅ **Layout Intuitiveness** - Which information hierarchy matches your priorities?
-✅ **Interaction Style** - Which interaction style fits your core experience?
-✅ **Visual Weight** - Which visual density feels right for your brand?
-✅ **Navigation Approach** - Which navigation pattern matches user expectations?
-✅ **Component Usage** - How well do the components support your user journeys?
-✅ **Brand Alignment** - Which direction best supports your emotional goals?
+Call `mcp__stitch__generate_screen_from_text` with the confirmed payload.
 
-Take your time exploring - this is a crucial decision that will guide all our design work!"
+**Important:** The tool may take several minutes. Wait. If the call fails with a connection error, **DO NOT RETRY**. Instead:
+1. Wait ~30 seconds.
+2. Call `mcp__stitch__list_screens` with `projectId: "<stitch.projectId>"`.
+3. If a new screen exists, use it. If not, escalate to the user.
 
-### 4. Facilitate Design Direction Selection
+Capture `seedScreenId` from the returned screen resource (format: `projects/{p}/screens/{s}` → take the `{s}`).
 
-Help user choose or combine elements:
-"After exploring all the design directions:
+Save `stitch.seedScreenId` to frontmatter.
 
-**Which approach resonates most with you?**
+### 5. Compose the Variant Prompt
 
-- Pick a favorite direction as-is
-- Combine elements from multiple directions
-- Request modifications to any direction
-- Use one direction as a base and iterate
+Draft a prompt that instructs Stitch to produce distinct directional takes on the same screen. The variant prompt is **additive guidance**, not a full redescription:
 
-**Tell me:**
+```
+Explore different design directions for this screen. Keep the same content and user task, but vary the layout structure, information hierarchy, density, and how the primary action is surfaced. Each variant should feel like a legitimate alternative vision for the product — not a minor tweak.
+```
 
-- Which layout feels most intuitive for your users?
-- Which visual weight matches your brand personality?
-- Which interaction style supports your core experience?
-- Are there elements from different directions you'd like to combine?"
+### 6. Generate 5 Direction Variants
 
-### 5. Document Design Direction Decision
+Call `mcp__stitch__generate_variants` with:
 
-Capture the chosen approach:
-"Based on your exploration, I'm understanding your design direction preference:
+```json
+{
+  "projectId": "<stitch.projectId>",
+  "selectedScreenIds": ["<seedScreenId>"],
+  "deviceType": "<same as step 3>",
+  "modelId": "GEMINI_3_1_PRO",
+  "prompt": "<variant prompt from step 5>",
+  "variantOptions": {
+    "variantCount": 5,
+    "creativeRange": "EXPLORE",
+    "aspects": ["LAYOUT", "COLOR_SCHEME"]
+  }
+}
+```
 
-**Chosen Direction:** [Direction number or combination]
-**Key Elements:** [Specific elements you liked]
-**Modifications Needed:** [Any changes requested]
-**Rationale:** [Why this direction works for your product]
+Wait for completion (minutes). On connection error, do the `list_screens` recovery pattern from step 4.
 
-This will become our design foundation moving forward. Are we ready to lock this in, or do you want to explore variations?"
+Capture the 5 returned screen IDs. Save to `stitch.directionVariantScreenIds` in frontmatter.
 
-### 6. Generate Design Direction Content
+### 7. Present Variants for Review
 
-Prepare the content to append to the document:
+Tell the user:
 
-#### Content Structure:
+"Five design directions are now live in the Stitch project. Open each to compare:
 
-When saving to document, append these Level 2 and Level 3 sections:
+**Stitch project:** <stitch.projectUrl>
+
+**Seed (anchor):** [Screen 0](<stitch.projectUrl>/screens/<seedScreenId>)
+
+**Direction variants:**
+1. [Direction 1](<stitch.projectUrl>/screens/<variant1Id>) — <1-line hypothesis about what this direction emphasizes>
+2. [Direction 2](<stitch.projectUrl>/screens/<variant2Id>) — ...
+3. [Direction 3](<stitch.projectUrl>/screens/<variant3Id>) — ...
+4. [Direction 4](<stitch.projectUrl>/screens/<variant4Id>) — ...
+5. [Direction 5](<stitch.projectUrl>/screens/<variant5Id>) — ...
+
+Evaluate each against:
+✅ **Layout intuitiveness** — does the information hierarchy match your priorities?
+✅ **Interaction style** — does it fit your core experience?
+✅ **Visual weight** — does the density feel right for your brand?
+✅ **Emotional alignment** — does it evoke the response you defined in step-04?
+
+Which direction speaks to you? Options:
+- **Pick one** (e.g., 'direction 3')
+- **Combine** ('direction 2's layout with direction 4's color treatment')
+- **Refine one** ('direction 3 but with the primary CTA more prominent')"
+
+### 8. Handle the User's Direction Choice
+
+Three paths based on the user's answer:
+
+#### 8a. Pick one as-is
+
+Save `stitch.chosenDirectionScreenId` = the selected variant's ID. Proceed to step 9.
+
+#### 8b. Refine one via edit_screens
+
+Call `mcp__stitch__edit_screens` with:
+```json
+{
+  "projectId": "<stitch.projectId>",
+  "selectedScreenIds": ["<selectedVariantId>"],
+  "prompt": "<user's refinement instructions>",
+  "modelId": "GEMINI_3_1_PRO"
+}
+```
+
+Wait for completion. The screen ID stays the same (edit mutates in place). Keep `stitch.chosenDirectionScreenId` = the same ID. Loop back to step 7 if the user wants to review again; otherwise proceed to step 9.
+
+#### 8c. Combine directions
+
+`edit_screens` cannot natively combine two sources. Instead:
+1. Pick the primary direction as base.
+2. Call `edit_screens` on the base with a prompt like: "Adopt the color treatment and button style from direction X while keeping this layout." Reference the other direction's screen ID in prose.
+3. Save `stitch.chosenDirectionScreenId` = the base screen's ID after the edit.
+
+### 9. Generate Direction Decision Content
+
+Append to the spec body:
 
 ```markdown
 ## Design Direction Decision
 
-### Design Directions Explored
+### Directions Explored
 
-[Summary of design directions explored based on conversation]
+All 5 directions were generated as Stitch screens in project `<stitchProjectId>`. See the Stitch project for live, interactive renders.
+
+| # | Screen ID | Emphasis |
+|---|-----------|----------|
+| 0 (seed) | `<seedScreenId>` | Anchor interpretation of the core screen |
+| 1 | `<variant1Id>` | <1-line emphasis> |
+| 2 | `<variant2Id>` | <1-line emphasis> |
+| 3 | `<variant3Id>` | <1-line emphasis> |
+| 4 | `<variant4Id>` | <1-line emphasis> |
+| 5 | `<variant5Id>` | <1-line emphasis> |
 
 ### Chosen Direction
 
-[Chosen design direction based on conversation]
+- **Screen ID:** `<stitch.chosenDirectionScreenId>`
+- **Stitch URL:** <stitch.projectUrl>/screens/<chosenDirectionScreenId>
+- **Why this direction:** [1–3 sentences tying the choice to step-04 emotional goals + step-07 core experience]
+- **Modifications applied via `edit_screens`:** [list, or "None"]
 
-### Design Rationale
+### Implementation Implication
 
-[Rationale for design direction choice based on conversation]
-
-### Implementation Approach
-
-[Implementation approach based on chosen direction]
+All downstream journey screens (step-10) will be generated in this same Stitch project against the registered design system, using the chosen direction as the aesthetic reference.
 ```
 
-### 7. Present Content and Menu
+### 10. Present Content and Menu
 
-Show the generated design direction content and present choices:
-"I've documented our design direction decision for {{project_name}}. This visual approach will guide all our detailed design work.
+"Design direction is locked. Here's what I'll add to the spec:
 
-**Here's what I'll add to the document:**
-
-[Show the complete markdown content from step 6]
+[Show the complete markdown content from step 9]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our design direction
-[P] Party Mode - Bring different perspectives on visual choices
-[C] Continue - Save this to the document and move to user journey flows
+[A] Adjust — regenerate variants with different aspects/creative range, or further `edit_screens` the chosen direction
+[P] Party Mode — second opinion on the chosen direction
+[C] Continue — save this to the spec and move to user journey flows"
 
-### 8. Handle Menu Selection
+### 11. Handle Menu Selection
 
-#### If 'A' (Advanced Elicitation):
+#### If 'A' (Adjust):
 
-- Read fully and follow: {project-root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current design direction content
-- Process the enhanced design insights that come back
-- Ask user: "Accept these improvements to the design direction? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+Options to offer the user:
+1. Re-run `generate_variants` with different `aspects` (e.g., `[IMAGES, TEXT_FONT]`) or `creativeRange` (`REFINE` for subtle, `REIMAGINE` for radical).
+2. Apply another `edit_screens` pass to the chosen direction.
+
+After adjustments, return to step 7 (present variants).
 
 #### If 'P' (Party Mode):
 
-- Read fully and follow: {project-root}/_bmad/core/workflows/party-mode/workflow.md with the current design direction
-- Process the collaborative design insights that come back
-- Ask user: "Accept these changes to the design direction? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- Read fully and follow: {project-root}/_bmad/core/workflows/party-mode/workflow.md with the Stitch URLs as context.
+- Process the collaborative feedback.
+- Ask: "Accept these changes? (y/n)"
+- If yes: apply via `edit_screens` and return to A/P/C menu.
+- If no: return to A/P/C menu.
 
 #### If 'C' (Continue):
 
-- Append the final content to `{planning_artifacts}/ux-design-specification.md`
-- Update frontmatter: append step to end of stepsCompleted array
-- Load `{project-root}/_bmad/bmm/workflows/2-plan-workflows/create-ux-design/steps/step-10-user-journeys.md`
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
+- Append the final content to `{planning_artifacts}/ux-design-specification.md`.
+- Confirm frontmatter has `stitch.seedScreenId`, `stitch.directionVariantScreenIds` (array of 5), `stitch.chosenDirectionScreenId` populated.
+- Update stepsCompleted array: append this step.
+- Load `{project-root}/_bmad/bmm/workflows/2-plan-workflows/create-ux-design/steps/step-09b-stitch-update.md` (Stitch design system refinement — will auto-skip if Stitch is unavailable and proceed to step-10).
 
 ## SUCCESS METRICS:
 
-✅ Multiple design direction variations generated
-✅ HTML showcase created with interactive elements
-✅ Design evaluation criteria clearly established
-✅ User able to explore and compare directions effectively
-✅ Design direction decision made with clear rationale
+✅ Seed screen generated in Stitch; ID persisted
+✅ 5 variant screens generated via `generate_variants`; IDs persisted as array
+✅ User evaluated variants against step-04 emotional goals and step-07 core experience
+✅ Chosen direction screen ID persisted (single ID)
+✅ Any `edit_screens` refinements captured in spec body
 ✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ No HTML showcase files created — Stitch URLs are the artifact
 
 ## FAILURE MODES:
 
-❌ Not creating enough variation in design directions
-❌ Design directions not aligned with established foundation
-❌ Missing interactive elements in HTML showcase
-❌ Not providing clear evaluation criteria
-❌ Rushing decision without thorough exploration
+❌ Generating fewer than 5 variants (the tool supports up to 5 in one call — use all 5)
+❌ Retrying on connection error instead of using `list_screens` recovery pattern
+❌ Writing HTML showcase files (`ux-design-directions.html`, `ux-color-themes.html`) — this flow is Stitch-only now
+❌ Leaving `stitch.chosenDirectionScreenId` empty when proceeding
+❌ Inventing product features in the seed prompt that aren't in the PRD
 ❌ Not presenting A/P/C menu after content generation
 ❌ Appending content without user selecting 'C'
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
+❌ **CRITICAL**: Reading only partial step file — leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
 
 ## NEXT STEP:
 
-After user selects 'C' and content is saved to document, load `{project-root}/_bmad/bmm/workflows/2-plan-workflows/create-ux-design/steps/step-10-user-journeys.md` to design user journey flows.
+After user selects 'C' and content is saved, load `{project-root}/_bmad/bmm/workflows/2-plan-workflows/create-ux-design/steps/step-09b-stitch-update.md` to sync the chosen design direction to the Stitch design system. Step-09b will auto-skip to step-10 if Stitch is unavailable.
 
-Remember: Do NOT proceed to step-10 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+Remember: Do NOT proceed to step-09b (or step-10) until user explicitly selects 'C' from the A/P/C menu and content is saved!

@@ -64,14 +64,81 @@ I've successfully collaborated with you to create a comprehensive UX design spec
 
 **The complete UX design specification is now available at:** `{planning_artifacts}/ux-design-specification.md`
 
-**Supporting Visual Assets:**
+**Supporting Visual Assets (live in Google Stitch):**
 
-- Color themes visualizer: `{planning_artifacts}/ux-color-themes.html`
-- Design directions mockups: `{planning_artifacts}/ux-design-directions.html`
+- Stitch project: `<stitch.projectUrl>` (ID `<stitch.projectId>`)
+- Registered design system: `assets/<stitch.designSystemAssetId>`
+- Chosen direction screen: `<stitch.projectUrl>/screens/<stitch.chosenDirectionScreenId>`
+- Per-journey Stitch screens (see `ux-stitch-artifacts.md`)
 
-This specification is now ready to guide visual design, implementation, and development."
+This specification — plus the live Stitch project — is now ready to guide visual design, implementation, and development."
 
-### 2. Workflow Status Update
+### 2. Write ux-stitch-artifacts.md
+
+Before updating status, consolidate all Stitch identifiers captured through steps 08b / 09 / 10 into a dedicated artifact file at `{planning_artifacts}/ux-stitch-artifacts.md`.
+
+Read the `stitch:` block from `ux-design-specification.md` frontmatter and the per-journey Stitch IDs documented in the spec body. Then write:
+
+```markdown
+---
+name: ux-stitch-artifacts
+description: Stitch project, design system, and screen inventory for {{project_name}} UX
+type: reference
+---
+
+# {{project_name}} — Stitch Artifacts
+
+## Project
+
+- **Project name:** {{project_name}} — UX Design
+- **Project ID:** `<stitch.projectId>`
+- **Project URL:** <stitch.projectUrl>
+- **Project resource name:** `<stitch.projectResourceName>`
+
+## Design System
+
+- **Asset ID:** `<stitch.designSystemAssetId>`
+- **Display name:** {{project_name}} — UX v1
+- (See "Stitch Design System" section of `ux-design-specification.md` for theme token values.)
+
+## Screens
+
+### Seed
+
+- `<stitch.seedScreenId>` — initial anchor interpretation of the core screen
+
+### Direction Variants (all 5)
+
+| # | Screen ID |
+|---|-----------|
+| 1 | `<variant1Id>` |
+| 2 | `<variant2Id>` |
+| 3 | `<variant3Id>` |
+| 4 | `<variant4Id>` |
+| 5 | `<variant5Id>` |
+
+### Chosen Direction
+
+- `<stitch.chosenDirectionScreenId>` — locked visual direction; all journey screens match its aesthetic
+
+### Journey Screens
+
+| Journey | Screen ID |
+|---------|-----------|
+| <journey 1 name> | `<id>` |
+| <journey 2 name> | `<id>` |
+| <journey 3 name> | `<id>` |
+
+## How to use this artifact
+
+- When implementing a journey, open the journey's Stitch screen alongside the UX spec — treat the Stitch screen as the visual source of truth and the spec as the behavioral/accessibility source of truth.
+- When generating a NEW screen post-UX (e.g., during development), call `mcp__stitch__generate_screen_from_text` with `projectId: <stitch.projectId>` so the new screen inherits the registered design system.
+- To refine any existing screen, use `mcp__stitch__edit_screens` with its screen ID.
+```
+
+Populate all `<...>` placeholders from the captured frontmatter. If any Stitch field in the frontmatter is empty, halt and tell the user which upstream step left the gap — do NOT write an artifacts file with missing IDs.
+
+### 3. Workflow Status Update
 
 Update the main workflow status file:
 
@@ -80,7 +147,7 @@ Update the main workflow status file:
 - Save file, preserving all comments and structure
 - Mark current timestamp as completion time
 
-### 3. Suggest Next Steps
+### 4. Suggest Next Steps
 
 UX Design complete. Read fully and follow: `{project-root}/_bmad/core/tasks/help.md`
 
@@ -167,5 +234,5 @@ This UX design workflow is now complete. The specification serves as the foundat
 **Core Deliverables:**
 
 - ✅ UX Design Specification: `{planning_artifacts}/ux-design-specification.md`
-- ✅ Color Themes Visualizer: `{planning_artifacts}/ux-color-themes.html`
-- ✅ Design Directions: `{planning_artifacts}/ux-design-directions.html`
+- ✅ Stitch Artifacts Index: `{planning_artifacts}/ux-stitch-artifacts.md`
+- ✅ Live Stitch project: `<stitch.projectUrl>` (with registered design system and all generated screens)
